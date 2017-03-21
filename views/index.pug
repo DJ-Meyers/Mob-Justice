@@ -1,0 +1,15 @@
+//-
+	Index.pug
+
+	This is the home page for this project. It is configured to auto-connect
+	to the server's websocket and handle any events fired from the server end.
+//-
+
+extends base
+
+//- The visual portion of the page
+block content
+	div.vertical-center
+		div.btn-group-vertical.btn-group-lg.btn-block
+			button.btn.btn-primary.btn-lg.btn-block.btn-main Create Room
+			button.btn.btn-secondary.btn-lg.btn-block.btn-main Join Room
