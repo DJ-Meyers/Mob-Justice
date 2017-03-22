@@ -10,11 +10,10 @@ doctype html
 html(lang="en")
     head
         meta(charset='utf-8')
+        meta(name="viewport", content="width=device-width, initial-scale=1")
         title= title
-        //- link(rel='stylesheet', href='/css/bootstrap.min.css')
-        //- link(rel='stylesheet', href='/css/bootstrap-grid.min.css')
-        //- //- link(rel='stylesheet', href='/css/bootstrap-reboot.min.css')
-        //- link(rel='stylesheet', href='/css/style.css')
+        link(rel='stylesheet', href='/css/bootstrap.min.css')
+        link(rel='stylesheet', href='/css/style.css')
 
     //- A block in html
     //- <element class="class" id="id" attribute="value">
@@ -23,16 +22,17 @@ html(lang="en")
 
     //- A block in pug
     //- element.class#id(attribute="value", attribute="value") Some Text
-    body(style="font-size: 2rem;")
-        div.container(style="background-color: #fff;")
-            nav.navbar.navbar-default
-                div.navbar-header
-                    a.navbar-brand(href="/") Mob Justice
-
-        div.container.vertical-center.white
-            block content
-
-        hr
+    body
+        //- div.container
+        nav.navbar.mb-4
+            div.container
+                a.navbar-brand(href="/") Mob Justice        
+        
+        
+        div.container
+            div.vertical-center
+                block content
+        
         footer.footer
             div.container
                 div.distribute

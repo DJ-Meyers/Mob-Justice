@@ -5,27 +5,22 @@ block content
     //- (action="http://192.168.1.3:8080/createGame", method="post")
     form
         div.form-group
-            label Number of Players
-            select.form-control.form-control-lg(type="text")
-                option 6-7 (2 Mafia)
-                option 8-10 (3 Mafia)
-                option 11-13 (4 Mafia)
-                option 14-16 (5 Mafia)
-        fieldset.form-group
-            legend Doctor
-            div.form-check
-                label.form-check-label Yes
-                    input.form-check-input#doctorYes(type="radio", name="optionsDoctor")
-            div.form-check
-                label.form-check-label No
-                    input.form-check-input#doctorNo(type="radio", name="optionsDoctor")
-        fieldset.form-group
-            legend Detective
-            div.form-check
-                label.form-check-label Yes
-                    input.form-check-input#detectiveYes(type="radio", name="optionsDetective")
-            div.form-check
-                label.form-check-label No
-                    input.form-check-input#detectiveNo(type="radio", name="optionsDetective")
-        div.form-group
-            input(type="submit" value="Create Game")
+            label(for="name") Your Name
+            input.form-control#name(placeholder="Name")
+        //- For now, I want to allow people to play without specifying number of players.
+        //- div.form-group
+        //-     label Number of Players
+        //-     select.form-control#players
+        //-         option 6-7 Players (2 Mafia)
+        //-         option 8-10 Players (3 Mafia)
+        //-         option 11-13 Players (4 Mafia)
+        //-         option 14-16 Players (5 Mafia)
+        div.form-check
+            label.form-check-label
+                input.form-check-input#doctor(type="checkbox")
+                span Doctor Prevent a citizen's death each night
+        div.form-check
+            label.form-check-label
+                input.form-check-input#doctor(type="checkbox")
+                span Detective: Learn a citizen's role each night
+        button.btn.btn-primary.btn-block(type="submit") Create Game
