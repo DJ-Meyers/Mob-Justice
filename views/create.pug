@@ -1,0 +1,21 @@
+extends base
+
+//- The visual portion of the page
+block content
+    form
+        div.form-group
+            label Number of Players
+            select.form-control.form-control-lg(type="text")
+                option 6-7 (2 Mafia)
+                option 8-10 (3 Mafia)
+                option 11-13 (4 Mafia)
+                option 14-16 (5 Mafia)
+        fieldset.form-group
+            legend Doctor
+            div.form-check
+                label.form-check-label Yes
+                    input.form-check-input#doctorYes(type="radio", name="optionsDoctor")
+            div.form-check
+                label.form-check-label No
+                    input.form-check-input#doctorNo(type="radio", name="optionsDoctor")
+        

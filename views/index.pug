@@ -9,7 +9,6 @@ extends base
 
 //- The visual portion of the page
 block content
-	div.vertical-center
-		div.btn-group-vertical.btn-group-lg.btn-block
-			button.btn.btn-primary.btn-lg.btn-block.btn-main Create Room
-			button.btn.btn-secondary.btn-lg.btn-block.btn-main Join Room
+	div.btn-group-vertical.btn-group-lg.btn-block
+		button.btn.btn-primary.btn-lg.btn-block.btn-main(onclick="location.href='/create'") Create Room
+		button.btn.btn-secondary.btn-lg.btn-block.btn-main(onclick="location.href='/join'") Join Room

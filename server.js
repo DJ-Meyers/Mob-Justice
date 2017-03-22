@@ -31,6 +31,13 @@ function setupExpress() {
 		res.render('index', {title: 'Mob Justice'});
 	});
 
+	app.get('/join', (req, res) => {
+		res.render('join', {title: 'Mob Justice - Join'});
+	});
+
+	app.get('/create', (req, res) => {
+		res.render('create', {title: 'Mob Justice - Create'});
+	});
 
 	// Basic 404 Page
 	app.use((req, res, next) => {

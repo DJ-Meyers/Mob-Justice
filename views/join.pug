@@ -1,0 +1,13 @@
+extends base
+
+//- The visual portion of the page
+block content
+	form
+		div.form-group
+			label(for="name") Name
+			input.form-control.form-control-lg#name(type="text", placeholder="Your Name")
+		div.form-group
+			label(for="roomId") Room ID
+			input.form-control.form-control-lg#roomId(type="text", placeholder="Room ID")
+		div.form-group
+			button.btn.btn-primary.btn-lg.btn-block.btn-main Join

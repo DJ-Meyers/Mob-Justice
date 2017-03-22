@@ -13,16 +13,16 @@ html(lang="en")
 		title= title
 		link(rel='stylesheet', href='/css/bootstrap.min.css')
 		link(rel='stylesheet', href='/css/bootstrap-grid.min.css')
-		link(rel='stylesheet', href='/css/bootstrap-reboot.min.css')
+		//- link(rel='stylesheet', href='/css/bootstrap-reboot.min.css')
 		link(rel='stylesheet', href='/css/style.css')
 
 	body
-		nav.navbar.navbar-default
-			div.container
+		div.container(style="background-color: #fff;")
+			nav.navbar.navbar-default
 				div.navbar-header
 					a.navbar-brand(href="#") Mob Justice
 
-		div.container
+		div.container.vertical-center.white
 			block content
 
 		footer.footer

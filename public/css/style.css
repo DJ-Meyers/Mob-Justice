@@ -1,59 +1,98 @@
 
 /*General CSS*/
- html {
-   position: relative;
-   min-height: 100%;
- }
+html {
+    position: relative;
+    min-height: 100%;
+}
 
- .container, .co {
-   width: auto;
-   max-width: 680px;
-   padding: 0 15px;
- }
+body {
+    background-color: #f5f5f5;
+}
 
- /*Header/Navbar-related CSS*/
+.container, .co {
+    width: auto;
+    max-width: 900px;
+    padding: 0 15px;
+}
+
+.vertical-center {
+    min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+    min-height: 100vh; /* These two lines are counted as one :-)       */
+    position: inherit;
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    font-size: 2vw;
+}
+
+/*Phones*/
+@media (max-width: 768px) {
+    .vertical-center, footer {
+        font-size: 10vw;
+    }
+}
+
+/*Header/Navbar-related CSS*/
 .navbar {
     position: absolute;
     width: 100%;
-    height: 60px;
+    height: 120px;
+    align-items: center;
 }
 
- .navbar-brand {
+.navbar-brand {
     font-size: 4rem;
- }
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background-color: #fff;
+}
 
- a, a:hover {
+a, a:hover {
     color: inherit !important;
- }
+}
 
 /*Footer-related CSS*/
- .footer {
-   position: absolute;
-   bottom: 0;
-   width: 100%;
-   /* Set the fixed height of the footer here */
-   height: 60px;
-   line-height: 60px; /* Vertically center the text there */
-   background-color: #f5f5f5;
-   font-size: 1.5rem;
- }
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    /* Set the fixed height of the footer here */
+    height: 60px;
+    line-height: 60px; /* Vertically center the text there */
+    background-color: #f5f5f5;
+    font-size: 18pt;
+}
 
- .distribute {
+.distribute {
     display: flex;
     flex-flow: row wrap;
     justify-content: space-around;
- }
+}
 
 /*Specific CSS*/
-.vertical-center {
-  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
-  min-height: 100vh; /* These two lines are counted as one :-)       */
 
-  display: flex;
-  align-items: center;
+.white {
+    background-color: #fff;
 }
 
 /*Button CSS*/
 .btn-main {
-    font-size: 2.5rem !important;
+    font-size: 36pt !important;
+}
+
+#errorMsg {
+    text-align: center;
+}
+
+form {
+    width: 100%;
+}
+
+.form-control-lg {
+    height: 4rem;
+}
+
+legend {
+    font-size: 3vh;
 }
