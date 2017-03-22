@@ -39,6 +39,13 @@ function setupExpress() {
 		res.render('create', {title: 'Mob Justice - Create'});
 	});
 
+	app.get('/about', (req, res) => {
+		res.render('about', {title: 'Mob Justice - About'});
+	});
+
+	app.get('/creators', (req, res) => {
+		res.render('creators', {title: 'Mob Justice - Creators'});
+	});
 
 
 	//Post Request to create new room
