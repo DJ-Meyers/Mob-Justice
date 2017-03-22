@@ -41,6 +41,12 @@ function setupExpress() {
 
 
 
+	//Post Request to create new room
+	// app.post('/createGame', (req, res) => {
+	// 	console.log(req.body);
+	// 	res.send('Creating game: ' + req.body);
+	// });
+
 	// Basic 404 Page
 	app.use((req, res, next) => {
 		var err = {

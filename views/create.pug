@@ -2,6 +2,7 @@ extends base
 
 //- The visual portion of the page
 block content
+    //- (action="http://192.168.1.3:8080/createGame", method="post")
     form
         div.form-group
             label Number of Players
@@ -18,4 +19,13 @@ block content
             div.form-check
                 label.form-check-label No
                     input.form-check-input#doctorNo(type="radio", name="optionsDoctor")
-        
+        fieldset.form-group
+            legend Detective
+            div.form-check
+                label.form-check-label Yes
+                    input.form-check-input#detectiveYes(type="radio", name="optionsDetective")
+            div.form-check
+                label.form-check-label No
+                    input.form-check-input#detectiveNo(type="radio", name="optionsDetective")
+        div.form-group
+            input(type="submit" value="Create Game")
