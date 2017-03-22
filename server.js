@@ -39,6 +39,8 @@ function setupExpress() {
 		res.render('create', {title: 'Mob Justice - Create'});
 	});
 
+
+
 	// Basic 404 Page
 	app.use((req, res, next) => {
 		var err = {

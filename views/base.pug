@@ -11,12 +11,12 @@ html(lang="en")
 	head
 		meta(charset='utf-8')
 		title= title
-		link(rel='stylesheet', href='/css/bootstrap.min.css')
-		link(rel='stylesheet', href='/css/bootstrap-grid.min.css')
-		//- link(rel='stylesheet', href='/css/bootstrap-reboot.min.css')
-		link(rel='stylesheet', href='/css/style.css')
+		//- link(rel='stylesheet', href='/css/bootstrap.min.css')
+		//- link(rel='stylesheet', href='/css/bootstrap-grid.min.css')
+		//- //- link(rel='stylesheet', href='/css/bootstrap-reboot.min.css')
+		//- link(rel='stylesheet', href='/css/style.css')
 
-	body
+	body(style="font-size: 2rem;")
 		div.container(style="background-color: #fff;")
 			nav.navbar.navbar-default
 				div.navbar-header
@@ -29,11 +29,11 @@ html(lang="en")
 			div.container
 				div.distribute
 					span 
-						a(href="#") About the Game
+						a(href="/") About the Game
 					span 
-						a(href="#") About the Creators
+						a(href="/") About the Creators
 					span 
-						a(href="#") Github
+						a(href="/") Github
 
 	// Include all needed scripts
 	script(type='text/javascript', src='/js/socket.io.js')
