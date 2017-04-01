@@ -2,12 +2,13 @@ extends base
 
 //- The visual portion of the page
 block content
-	form
-		div.form-group
-			label(for="name") Name
-			input.form-control#name(type="text", placeholder="Your Name")
-		div.form-group
-			label(for="roomId") Room ID
-			input.form-control#roomId(type="text", placeholder="Room ID")
-		div.form-group
-			button.btn.btn-primary.btn-block.btn-main Join Game
+	div.vertical-center
+		form
+			div.form-group
+				label(for="name") Name
+				input.form-control#name(type="text", placeholder="Your Name")
+			div.form-group
+				label(for="roomId") Room ID
+				input.form-control#roomId(type="text", placeholder="Room ID")
+			div.form-group
+				button.btn.btn-primary.btn-block.btn-main Join Game

@@ -8,6 +8,8 @@
  */
 var express   = require('express'),
 	app       = express();
+var bodyParser = require('body-parser');
+var urlencodedParser = bodyParser.urlencoded({ extended: false });
 var pug       = require('pug');
 var sockets   = require('socket.io');
 var path      = require('path');
@@ -23,6 +25,8 @@ function setupExpress() {
 	// Setup the 'public' folder to be statically accessable
 	var publicDir = path.join(__dirname, 'public');
 	app.use(express.static(publicDir));
+
+
 
 	// Setup the paths (Insert any other needed paths here)
 	// ------------------------------------------------------------------------
@@ -48,11 +52,19 @@ function setupExpress() {
 	});
 
 
-	//Post Request to create new room
-	// app.post('/createGame', (req, res) => {
-	// 	console.log(req.body);
-	// 	res.send('Creating game: ' + req.body);
-	// });
+	// Post Request to create new room
+	app.post('/newGame', urlencodedParser, (req, res) => {
+		var response = {
+			name:req.body.name,
+			doctor:req.body.doctor,
+			detective:req.body.detective,
+			roomCode:createRoomCode()
+		};
+		console.log(response);
+		// console.log(req.body.doctor);
+		// console.log(req.body.detective);
+		res.end(JSON.stringify(response));
+	});
 
 	// Basic 404 Page
 	app.use((req, res, next) => {
@@ -89,4 +101,14 @@ function setupSocket() {
 	server.listen(conf.PORT, conf.HOST, () => {
 		console.log("Listening on: " + conf.HOST + ":" + conf.PORT);
 	});
+}
+
+function createRoomCode() {
+	var code = "";
+	for(var i = 0; i < 4; i++) {
+		var letter = String.fromCharCode(Math.random() * (26) + 65);
+		code += letter;
+	}
+	console.log(code);
+	return code;
 }
