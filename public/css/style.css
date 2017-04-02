@@ -5,6 +5,11 @@ html {
     min-height: 100%;
 }
 
+.long-content {
+    margin-top: 68px;
+    position: absolute;
+}
+
 .container, .co {
     width: auto;
     max-width: 900px;
