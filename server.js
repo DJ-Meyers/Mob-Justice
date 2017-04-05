@@ -26,7 +26,7 @@ function setupExpress() {
 	var publicDir = path.join(__dirname, 'public');
 	app.use(express.static(publicDir));
 
-
+	var activeGames = [];
 
 	// Setup the paths (Insert any other needed paths here)
 	// ------------------------------------------------------------------------
@@ -54,16 +54,35 @@ function setupExpress() {
 
 	// Post Request to create new room
 	app.post('/newGame', urlencodedParser, (req, res) => {
-		var response = {
-			name:req.body.name,
-			doctor:req.body.doctor,
-			detective:req.body.detective,
-			roomCode:createRoomCode()
+		//Initialize doctor and detective to off
+		var doctor = 'off', detective = 'off';
+		var users = [];
+
+		//If they're included in the form submission, set them to on.
+		if(req.body.doctor) {
+			doctor = 'on';
+		}
+		if(req.body.detective) {
+			detective = 'on';
+		}
+
+		var user = {
+			name:req.body.name
 		};
-		console.log(response);
-		// console.log(req.body.doctor);
-		// console.log(req.body.detective);
-		res.end(JSON.stringify(response));
+
+		users.push(user);
+
+		var newGame = {
+			roomCode:createRoomCode(),
+			doctor:doctor,
+			detective:detective,
+			users: [user]
+		};
+
+		activeGames.push(newGame);
+		console.log(user.name + "created: " + newGame);
+		console.log(activeGames);
+		res.end(JSON.stringify(newGame));
 	});
 
 	// Basic 404 Page
