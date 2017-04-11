@@ -2,10 +2,32 @@ extends base
 
 //- The visual portion of the page
 block content
-    div.vertical-center
-        h4 lmao
-        ul.list-group
-            li.list-group-item Yolo
-            li.list-group-item Yolo
-            li.list-group-item Yolo
-            li.list-group-item Yolo
+    div.vertical-center.align-middle
+        ul.list-group.align-middle
+            li.list-group-item.list-group-item-action Spencer 
+            li.list-group-item.list-group-item-action DJ 
+            li.list-group-item.list-group-item-action Bridget
+            li.list-group-item.list-group-item-action.disabled Khari
+
+    script(type="text/javascript").
+        var listItems = document.querySelectorAll('.list-group-item');
+        var target = '';
+        for(var i = 0; i < listItems.length; i++) {
+            var listItem = listItems[i];
+            listItem.addEventListener('click', function() {
+                /*Anything active make inactive*/
+                if(!this.classList.contains('disabled')) {
+                    var currentActive = document.querySelectorAll('.active');
+                    for(var j = 0; j < currentActive.length; j++){
+                        currentActive[j].classList.remove('active');
+                    }
+
+
+                    this.classList.add('active');
+
+                    target = this.innerHTML;
+                    console.log(target);
+                }
+
+            });
+        }
