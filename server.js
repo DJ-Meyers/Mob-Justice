@@ -39,6 +39,10 @@ function setupExpress() {
 		res.render('join', {title: 'Mob Justice - Join'});
 	});
 
+	app.get('/play', (req, res) => {
+		res.render('play', {title: 'Mob Justice - Play'});
+	});
+
 	app.get('/create', (req, res) => {
 		res.render('create', {title: 'Mob Justice - Create'});
 	});
@@ -71,23 +75,18 @@ function setupExpress() {
 			role:"citizen"
 		};
 
-		var roomCode = createRoomCode();
 		//users.push(user);
 
 		var newGame = {
-			roomCode:roomCode,
+			roomCode:createRoomCode(),
 			doctor:doctor,
 			detective:detective,
 			users: [user]
 		};
 
-
-
 		activeGames.push(newGame);
 		console.log(user.name + " created: " + newGame);
 		console.log(activeGames);
-
-		//var socket = dynamic(roomCode);
 		res.end(JSON.stringify(newGame));
 	});
 
@@ -131,6 +130,7 @@ function setupExpress() {
 
 	// Handle killing the server
 	process.on('SIGINT', () => {
+		internals.stop();
 		process.kill(process.pid);
 	});
 }
@@ -139,19 +139,19 @@ function setupDynamic() {
 	var server = require('http').createServer(app);
 	var io = dynamic(server);
 
-	// io.setupNamespace('*', function(namespace) {
-	// 	namespace.retirement = Math.max(namespace.retirement, 30 * 1000);
-	//
-	// 	namespace.on('connect', function(socket) {
-	// 		console.log('New connection to ', namespace.fullname());
-	// 		socket.on('disconnect', function() {
-	// 			console.log('Disconnection from ', namespace.fullname());
-	// 		});
-	// 	});
-	// 	return true;
-	// });
+	io.setupNamespace('*', function(namespace) {
+		namespace.retirement = Math.max(namespace.retirement, 30 * 1000);
 
-	server.listen(conf.PORT, conf.HOST, () => {
+		namespace.on('connect', function(socket) {
+			console.log('New connection to ', namespace.fullname());
+			socket.on('disconnect', function() {
+				console.log('Disconnection from ', namespace.fullname());
+			});
+		});
+		return true;
+	});
+
+	io.listen(conf.PORT, conf.HOST, () => {
 		console.log("Listening on: " + conf.HOST + ":" + conf.PORT);
 	});
 }
