@@ -3,11 +3,15 @@ extends base
 //- The visual portion of the page
 block content
     div.vertical-center.align-middle
-        ul.list-group.align-middle#playerList
-            //- li.list-group-item.list-group-item-action Spencer 
-            //- li.list-group-item.list-group-item-action DJ 
-            //- li.list-group-item.list-group-item-action Bridget
-            //- li.list-group-item.list-group-item-action.disabled Khari
+        div.card.middle-align.mid 
+            div.card-block
+                h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.    
+            ul.list-group.align-middle.list-group-flush#playerList 
+            div.card-block
+        //- li.list-group-item.list-group-item-action Spencer 
+        //- li.list-group-item.list-group-item-action DJ 
+        //- li.list-group-item.list-group-item-action Bridget
+        //- li.list-group-item.list-group-item-action.disabled Khari
 
     script(type="text/javascript").
         //Init Players
@@ -15,7 +19,7 @@ block content
             {"name": "Spencer", "status": "alive"},
             {"name": "Bridget", "status": "dead"},
             {"name": "Khari", "status": "alive"}, ];
-
+        var target = " ";
         var listGroup = document.getElementById('playerList');
         for(var p = 0; p < playerList.length; p++) {
             var thisPlayer = document.createElement('li');

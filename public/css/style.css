@@ -10,12 +10,13 @@ html {
     position: absolute;
 }
 
+
 .container, .co {
     width: auto;
     max-width: 900px;
     padding: 0 15px;
 }
-.list-group {
+.list-group, .mid{
   min-width: 300px;
   margin-left: auto;
   margin-right: auto;
