@@ -10,6 +10,10 @@ html {
     position: absolute;
 }
 
+#submit {
+    text-align: center;
+}
+
 .hidden {
     visibility: hidden;
     position: fixed;
