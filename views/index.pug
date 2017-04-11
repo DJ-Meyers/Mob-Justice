@@ -107,11 +107,12 @@ block content
 		createSubmit.click(function() {
 			roomCode = createRoomCode();
 			name = createName.val();
-			console.log(name + " attempting to join " + roomCode);
-			socket.emit('join', roomCode, name);
 			
 			createDiv.removeClass('vertical-center').addClass('hidden');
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
+			
+			console.log(name + " attempting to join " + roomCode);
+			socket.emit('join', roomCode, name);
 			
 			roomCodeHeader.text(roomCode);
 		});
@@ -119,21 +120,29 @@ block content
 		joinSubmit.click(function() {
 			roomCode = joinCode.val();
 			name = joinName.val();
-			console.log(name + " attempting to join " + roomCode);
 			
 			joinDiv.removeClass('vertical-center').addClass('hidden');
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
 			
+			//TODO URL
+			var getURL = 'http://192.168.1.3:3000/currentUsers/' + roomCode;
+			var xmlHttp = new XMLHttpRequest();
+			xmlHttp.open("GET", getURL, false);
+			xmlHttp.send();
+			var currentUsers = JSON.parse(xmlHttp.responseText);
 			
+			for(var u = 0; u < currentUsers.length; u++) {
+				addUserToWaitPlayerList(currentUsers[u]);
+			}
+			
+			console.log(name + " attempting to join " + roomCode);
 			socket.emit('join', roomCode, name);
+			
+			roomCodeHeader.text(roomCode);
 		});
 		
 		socket.on('newUser', function(username) {
-			var thisPlayer = document.createElement('li');
-			thisPlayer.classList.add('list-group-item','list-group-item-action');
-
-			thisPlayer.appendChild(document.createTextNode(username));
-			$('#waitPlayerList').append(thisPlayer);
+			addUserToWaitPlayerList(username);
 		});
 		
 		joinVoting.click(function() {
@@ -175,6 +184,14 @@ block content
 			}
 
 		});
+		
+		function addUserToWaitPlayerList(username) {
+			var thisPlayer = document.createElement('li');
+			thisPlayer.classList.add('list-group-item','list-group-item-action');
+
+			thisPlayer.appendChild(document.createTextNode(username));
+			$('#waitPlayerList').append(thisPlayer);
+		}
 		
 		function createRoomCode() {
 			var code = "";

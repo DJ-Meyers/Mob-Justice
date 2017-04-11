@@ -64,6 +64,11 @@ app.get('/', (req, res) => {
 	res.render('index', {title: 'Mob Justice'});
 });
 
+app.get('/currentUsers/:roomCode', (req, res) => {
+	var room = findRoom(req.params.roomCode);
+	res.send(room.users);
+});
+
 function createRoomCode() {
 	var code = "";
 	for(var i = 0; i < 4; i++) {
