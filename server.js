@@ -14,6 +14,7 @@ var pug       = require('pug');
 var socket   = require('socket.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
+
 var activeGames = [];
 
 setupExpress();
@@ -142,7 +143,6 @@ function setupExpress() {
 function setupSocket() {
 	var server = require('http').createServer(app);
 	var io = socket(server);
-
 
 	server.listen(conf.PORT, conf.HOST, () => {
 		console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
