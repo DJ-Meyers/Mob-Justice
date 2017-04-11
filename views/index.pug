@@ -9,235 +9,256 @@ extends base
 
 //- The visual portion of the page
 block content
-	div.vertical-center#landing
-		div.btn-group-vertical.btn-group-lg.btn-block
-			button.btn.btn-primary.btn-lg.btn-block.btn-main#createBtn Create Game
-			button.btn.btn-secondary.btn-lg.btn-block.btn-main#joinBtn Join Game
-	
-	div#createDiv.hidden
-		div.notAForm#createForm
-			div.form-group
-				label(for="name") Your Name
-				input.form-control#createName(placeholder="Name" name="name")
-			//- div.form-check
-			//- 	label.form-check-label
-			//- 		input.form-check-input#doctor(type="checkbox" name="doctor" checked)
-			//- 		span Doctor: Prevent a citizen's death each night
-			//- div.form-check
-			//- 	label.form-check-label
-			//- 		input.form-check-input#detective(type="checkbox" name="detective" checked)
-			//- 		span Detective: Learn a citizen's role each night
-			button.btn.btn-primary.btn-block#createSubmit Create Game
-	
-	div#joinDiv.hidden
-		div.notAForm#joinForm
-			div.form-group
-				label(for="name") Name
-				input.form-control#joinName(type="text", placeholder="Your Name", name="name")
-			div.form-group
-				label(for="roomId") Room ID
-				input.form-control#joinCode(type="text", placeholder="Room ID", name="roomCode")
-			div.form-group
-				button.btn.btn-primary.btn-block.btn-main#joinSubmit Join Game
-				
-	div#waitingRoom.hidden
-		div.card.middle-align.mid 
-			div.card-block
-				h4.card-title.alert.alert-info.align-middle(role="alert")
-					strong Room Code: 
-					span#roomCodeHeader
-			ul.list-group.align-middle.list-group-flush#waitPlayerList
-			div.card-block#startButtonDiv
-				//- button.btn.btn-primary.btn-block#startGame(type="button") Start
-				
-	div#votingRoom.hidden
-		div.card.middle-align.mid 
-			div.card-block
-				h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.
-			ul.list-group.align-middle.list-group-flush#playerList
-			div.card-block
-				button.btn.btn-outline-primary#submit(type="button") Submit
-					
-	script(type="text/javascript", src="/socket.io/socket.io.js")
-	script(type="text/javascript", src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js")
-	script(type="text/javascript").
-		var socket = io.connect();
-		
-		//Cancer
-		var landing 			=	$('#landing');
-			var createBtn 		=	$('#createBtn');
-			var joinBtn			=	$('#joinBtn');
-		
-		var createDiv			=	$('#createDiv');
-			var createName		= 	$('#createName');
-			var createSubmit	=	$('#createSubmit');
-		
-		var joinDiv				=	$('#joinDiv');
-			var joinName		=	$('#joinName');
-			var joinCode		=	$('#joinCode');
-			var joinSubmit		=	$('#joinSubmit');
-			
-		var waitingRoom			=	$('#waitingRoom');
-			var roomCodeHeader	=	$('#roomCodeHeader');
-			var waitPlayerList	=	$('#waitPlayerList');
-	 		
-		var votingRoom			=	$('#votingRoom');
-			var joinVoting		= 	$('#goToVoting');
-			
-		var roomCode = "", name = "";
-		
-		var target = " ";
-		var init = false;
+    div.vertical-center#landing
+        div.btn-group-vertical.btn-group-lg.btn-block
+            button.btn.btn-primary.btn-lg.btn-block.btn-main#createBtn Create Game
+            button.btn.btn-secondary.btn-lg.btn-block.btn-main#joinBtn Join Game
 
-		var playerList = [{"name": "DJ", "status": "alive"},
-			{"name": "Spencer", "status": "alive"},
-			{"name": "Bridget", "status": "dead"},
-			{"name": "Khari", "status": "alive"}, ];
-		
-		createBtn.click(function() {
-			createDiv.removeClass('hidden').addClass('vertical-center');
-			landing.addClass('hidden').removeClass('vertical-center');
-		});
-		
-		joinBtn.click(function() {
-			joinDiv.removeClass('hidden').addClass('vertical-center');
-			landing.addClass('hidden').removeClass('vertical-center');
-		});
-			
-		createSubmit.click(function() {
-			roomCode = createRoomCode();
-			name = createName.val();
-			
-			createDiv.removeClass('vertical-center').addClass('hidden');
-			waitingRoom.addClass('vertical-center').removeClass('hidden');
-			
-			console.log(name + " attempting to join " + roomCode);
-			socket.emit('create', roomCode, name);
-			
-			roomCodeHeader.text(roomCode);
-			
-			
-			
-			var startButton = document.createElement('button');
-			startButton.classList.add('btn','btn-primary','btn-block');
-			startButton.appendChild(document.createTextNode('Start Game'));
-			startButton.addEventListener('click', function() {
-				//- var postURL = 'http://192.168.1.3:3000/startGame/' + roomCode;
-				//- var xmlHttp = new XMLHttpRequest();
-				//- xmlHttp.open("POST", postURL, false);
-				//- xmlHttp.send();
-				
-				socket.emit('startGame', roomCode);
-			});
+    div#createDiv.hidden
+        div.notAForm#createForm
+            div.form-group
+                label(for="name") Your Name
+                input.form-control#createName(placeholder="Name" name="name")
+            //- div.form-check
+            //- 	label.form-check-label
+            //- 		input.form-check-input#doctor(type="checkbox" name="doctor" checked)
+            //- 		span Doctor: Prevent a citizen's death each night
+            //- div.form-check
+            //- 	label.form-check-label
+            //- 		input.form-check-input#detective(type="checkbox" name="detective" checked)
+            //- 		span Detective: Learn a citizen's role each night
+            button.btn.btn-primary.btn-block#createSubmit Create Game
 
-			
-			$('#startButtonDiv').append(startButton);
-		});
-		
-		joinSubmit.click(function() {
-			roomCode = joinCode.val();
-			name = joinName.val();
-			
-			joinDiv.removeClass('vertical-center').addClass('hidden');
-			waitingRoom.addClass('vertical-center').removeClass('hidden');
-			
-			//TODO URL
-			var getURL = 'http://192.168.1.3:3000/currentUsers/' + roomCode;
-			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.open("GET", getURL, false);
-			xmlHttp.send();
-			var currentUsers = JSON.parse(xmlHttp.responseText);
-			console.log(currentUsers);
-			
-			for(var u = 0; u < currentUsers.length; u++) {
-				addUserToWaitPlayerList(currentUsers[u]);
-			}
-			
-			console.log(name + " attempting to join " + roomCode);
-			socket.emit('join', roomCode, name);
-			
-			roomCodeHeader.text(roomCode);
-			
-			var startButton = document.createElement('button');
-			startButton.classList.add('btn','btn-primary','btn-block');
-			startButton.disabled = true;
-			startButton.appendChild(document.createTextNode('Wait on leader to start'));
-			
-			$('#startButtonDiv').append(startButton);
-		});
-		
-		socket.on('newUser', function(username) {
-			addUserToWaitPlayerList(username);
-		});
-		
-		socket.on('gameStarted', function() {
-			console.log('Game starting');
-		}); 
-		
-		joinVoting.click(function() {
+    div#joinDiv.hidden
+        div.notAForm#joinForm
+            div.form-group
+                label(for="name") Name
+                input.form-control#joinName(type="text", placeholder="Your Name", name="name")
+            div.form-group
+                label(for="roomId") Room ID
+                input.form-control#joinCode(type="text", placeholder="Room ID", name="roomCode")
+            div.form-group
+                button.btn.btn-primary.btn-block.btn-main#joinSubmit Join Game
 
-			waitingRoom.removeClass('vertical-center').addClass('hidden');
-			votingRoom.addClass('vertical-center').removeClass('hidden');
+    div#waitingRoom.hidden
+        div.card.middle-align.mid 
+            div.card-block
+                h4.card-title.alert.alert-info.align-middle(role="alert")
+                    strong Room Code: 
+                    span#roomCodeHeader
+            ul.list-group.align-middle.list-group-flush#waitPlayerList
+            div.card-block#startButtonDiv
+            //- button.btn.btn-primary.btn-block#startGame(type="button") Start
+    div#dayWaitingRoom.hidden
+        div.card.text-center.mid
+            div.card-block
+                h4.card-title Special title treatment
+                    p.card-text With supporting text below as a natural laed-in to additional context
+                        button.btn.btn-primary(type="button" data-toggle="collapse" data-target="#collapseExample" aria-expended="false" aria-controls="collapseExample") 
+                        div.collapse#collapseExample Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
 
-			if(init===false){
-				console.log("here");
-				var listGroup = document.getElementById('playerList');
-				for(var p = 0; p < playerList.length; p++) {
-					var thisPlayer = document.createElement('li');
-					thisPlayer.classList.add('list-group-item','list-group-item-action');
+    div#votingRoom.hidden
+        div.card.middle-align.mid 
+            div.card-block
+                h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.
+            ul.list-group.align-middle.list-group-flush#playerList
+            div.card-block
+                button.btn.btn-outline-primary#submit(type="button") Submit
 
-					if(playerList[p].status === "dead") {
-						thisPlayer.classList.add('disabled');
-					}
+    script(type="text/javascript", src="/socket.io/socket.io.js")
+    script(type="text/javascript", src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js")
+    script(type="text/javascript").
+        var socket = io.connect();
 
-					thisPlayer.appendChild(document.createTextNode(playerList[p].name));
-					thisPlayer.addEventListener('click', function() {
-						/*Anything active make inactive*/
-						if(!this.classList.contains('disabled')) {
-							var currentActive = document.querySelectorAll('.active');
-							for(var j = 0; j < currentActive.length; j++){
-								currentActive[j].classList.remove('active');
-							}
+        //Cancer
+        var landing 			=	$('#landing');
+            var createBtn 		=	$('#createBtn');
+            var joinBtn			=	$('#joinBtn');
+
+        var createDiv			=	$('#createDiv');
+            var createName		= 	$('#createName');
+            var createSubmit	=	$('#createSubmit');
+
+        var joinDiv				=	$('#joinDiv');
+            var joinName		=	$('#joinName');
+            var joinCode		=	$('#joinCode');
+            var joinSubmit		=	$('#joinSubmit');
+
+        var waitingRoom			=	$('#waitingRoom');
+            var roomCodeHeader	=	$('#roomCodeHeader');
+            var waitPlayerList	=	$('#waitPlayerList');
+
+        var votingRoom			=	$('#votingRoom');
+            var joinVoting		= 	$('#goToVoting');
+
+        var dayWaitingRoom		= 	$('#dayWaitingRoom');
+
+        var roomCode = "", name = "";
+
+        var target = " ";
+        var init = false;
+
+        var playerList = [{"name": "DJ", "status": "alive"},
+            {"name": "Spencer", "status": "alive"},
+            {"name": "Bridget", "status": "dead"},
+            {"name": "Khari", "status": "alive"}, ];
+
+        createBtn.click(function() {
+            createDiv.removeClass('hidden').addClass('vertical-center');
+            landing.addClass('hidden').removeClass('vertical-center');
+        });
+
+        joinBtn.click(function() {
+            joinDiv.removeClass('hidden').addClass('vertical-center');
+            landing.addClass('hidden').removeClass('vertical-center');
+        });
+
+        /*$(function () {
+        //shit just doesnt work, i have no idea why
+        $('#accordion').on('show.bs.collapse', function () {
+            if (active) $('#accordion .in').collapse('hide');
+        });
+        });*/
+
+        createSubmit.click(function() {
+            roomCode = createRoomCode();
+            name = createName.val();
+
+            createDiv.removeClass('vertical-center').addClass('hidden');
+            waitingRoom.addClass('vertical-center').removeClass('hidden');
+
+            console.log(name + " attempting to join " + roomCode);
+            socket.emit('create', roomCode, name);
+
+            roomCodeHeader.text(roomCode);
 
 
-							this.classList.add('active');
 
-							target = this.innerHTML;
-							console.log(target);
-						}
+            var startButton = document.createElement('button');
+            startButton.classList.add('btn','btn-primary','btn-block');
+            startButton.appendChild(document.createTextNode('Start Game'));
+            startButton.addEventListener('click', function() {
+                //- var postURL = 'http://192.168.1.3:3000/startGame/' + roomCode;
+                //- var xmlHttp = new XMLHttpRequest();
+                //- xmlHttp.open("POST", postURL, false);
+                //- xmlHttp.send();
 
-					});
-					listGroup.appendChild(thisPlayer);
-					init = true;
-				}
-			}
+                socket.emit('startGame', roomCode);
+                waitingRoom.removeClass('vertical-center').addClass('hidden');
+                dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
 
-		});
-		
-		function addUserToWaitPlayerList(username) {
-			var thisPlayer = document.createElement('li');
-			thisPlayer.classList.add('list-group-item','justify-content-between');
+            });
 
-			thisPlayer.appendChild(document.createTextNode(username));
-			
-			if(waitPlayerList.children().length === 0) {
-				var leaderBadge = document.createElement('span');
-				leaderBadge.classList.add('badge','badge-success','badge-pill');
-				leaderBadge.appendChild(document.createTextNode('Leader'));
-				thisPlayer.appendChild(leaderBadge);
-			}
-			
-			waitPlayerList.append(thisPlayer);
-			
-			
-		}
-		
-		function createRoomCode() {
-			var code = "";
-			for(var i = 0; i < 4; i++) {
-				var letter = String.fromCharCode(Math.random() * (26) + 65);
-				code += letter;
-			}
-			//- console.log(code);
-			return code;
-		}
+
+            $('#startButtonDiv').append(startButton);
+        });
+
+        joinSubmit.click(function() {
+            roomCode = joinCode.val();
+            name = joinName.val();
+
+            joinDiv.removeClass('vertical-center').addClass('hidden');
+            waitingRoom.addClass('vertical-center').removeClass('hidden');
+
+            //TODO URL
+            console.log(name + " attempting to join " + roomCode);
+            socket.emit('join', roomCode, name);
+
+            var getURL = 'http://100.65.0.137:3000/currentUsers/' + roomCode;
+            console.log(getURL);
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open("GET", getURL, false);
+            xmlHttp.send();
+            var currentUsers = JSON.parse(xmlHttp.responseText);
+            console.log(currentUsers);
+
+            for(var u = 0; u < currentUsers.length; u++) {
+                addUserToWaitPlayerList(currentUsers[u]);
+            }
+
+
+            roomCodeHeader.text(roomCode);
+
+            var startButton = document.createElement('button');
+            startButton.classList.add('btn','btn-primary','btn-block');
+            startButton.disabled = true;
+            startButton.appendChild(document.createTextNode('Wait on leader to start'));
+
+            $('#startButtonDiv').append(startButton);
+        });
+
+        socket.on('newUser', function(username) {
+            addUserToWaitPlayerList(username);
+        });
+
+        socket.on('gameStarted', function() {
+            console.log('Game starting');
+        }); 
+
+        joinVoting.click(function() {
+
+            waitingRoom.removeClass('vertical-center').addClass('hidden');
+            votingRoom.addClass('vertical-center').removeClass('hidden');
+
+            if(init===false){
+                console.log("here");
+                var listGroup = document.getElementById('playerList');
+                for(var p = 0; p < playerList.length; p++) {
+                    var thisPlayer = document.createElement('li');
+                    thisPlayer.classList.add('list-group-item','list-group-item-action');
+
+                    if(playerList[p].status === "dead") {
+                        thisPlayer.classList.add('disabled');
+                    }
+
+                    thisPlayer.appendChild(document.createTextNode(playerList[p].name));
+                    thisPlayer.addEventListener('click', function() {
+                        /*Anything active make inactive*/
+                        if(!this.classList.contains('disabled')) {
+                            var currentActive = document.querySelectorAll('.active');
+                            for(var j = 0; j < currentActive.length; j++){
+                                currentActive[j].classList.remove('active');
+                            }
+
+
+                            this.classList.add('active');
+
+                            target = this.innerHTML;
+                            console.log(target);
+                        }
+
+                    });
+                    listGroup.appendChild(thisPlayer);
+                    init = true;
+                }
+            }
+
+        });
+
+        function addUserToWaitPlayerList(username) {
+            var thisPlayer = document.createElement('li');
+            thisPlayer.classList.add('list-group-item','justify-content-between');
+
+            thisPlayer.appendChild(document.createTextNode(username));
+
+            if(waitPlayerList.children().length === 0) {
+                var leaderBadge = document.createElement('span');
+                leaderBadge.classList.add('badge','badge-success','badge-pill');
+                leaderBadge.appendChild(document.createTextNode('Leader'));
+                thisPlayer.appendChild(leaderBadge);
+            }
+
+            waitPlayerList.append(thisPlayer);
+
+
+        }
+
+        function createRoomCode() {
+            var code = "";
+            for(var i = 0; i < 4; i++) {
+                var letter = String.fromCharCode(Math.random() * (26) + 65);
+                code += letter;
+            }
+            //- console.log(code);
+            return code;
+        }

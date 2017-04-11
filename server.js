@@ -45,34 +45,34 @@ io.on('connection', function(socket) {
 		*/
 
 		// socket.join(roomCode);
-		// console.log(username + ' has connected to room: ' + roomCode);
-		//
-		// var user = {
-		// 	name: username,
-		// 	alive: true,
-		// 	role: "citizen"
-		// }
-		// //Add the room to activeRooms
-		// console.log(user);
-		// var users = [user];
-		// var room = findRoom(roomCode);
-		// if(!room) {
-		// 	room = {
-		// 		roomCode: roomCode,
-		// 		users: users,
-		// 		started: false
-		// 	};
-		// 	activeRooms.push(room);
-		// 	io.to(roomCode).emit('newUser', username);
-		// } else {
-		// 	if(!room.started) {
-		// 		room.users.push(user);
-		// 		io.to(roomCode).emit('newUser', username);
-		// 	} else {
-		// 		console.log( username + ' is attempting to join has already begun.');
-		// 	}
-		// }
-		// console.log(activeRooms);
+		console.log(username + ' has tried to connect to room: ' + roomCode);
+		var room = findRoom(roomCode);
+	    if(!room) console.log("wrong");
+		else {
+				socket.join(roomCode);
+				addUserToRoom(roomCode,username);
+
+			// //Add the room to activeRooms
+			 //console.log(user);
+			 //var users = [user];
+			// if(!room) {
+			// 	room = {
+			// 		roomCode: roomCode,
+			// 		users: users,
+			// 		started: false
+			// 	};
+			// 	activeRooms.push(room);
+			// 	io.to(roomCode).emit('newUser', username);
+			// } else {
+			// 	if(!room.started) {
+			// 		room.users.push(user);
+			// 		io.to(roomCode).emit('newUser', username);
+			// 	} else {
+			// 		console.log( username + ' is attempting to join has already begun.');
+			// 	}
+			// }
+			// console.log(activeRooms);
+		}
 	});
 
 	socket.on('create', function(roomCode, username) {
@@ -119,13 +119,15 @@ app.get('/', (req, res) => {
 });
 
 app.get('/currentUsers/:roomCode', (req, res) => {
+	console.log("recieved a request with room code"+ req.params.roomCode);
 	var room = findRoom(req.params.roomCode);
-	//console.log(room.users);
+	console.log(room.users);
 	var names = [];
 	for(var u = 0; u < room.users.length; u++) {
 		var thisName = room.users[u].name;
 		//console.log(thisName);
 		names.push(thisName);
+		console.log(thisName);
 	}
 	// console.log(names);
 	res.send(JSON.stringify(names));
@@ -156,7 +158,22 @@ function findRoom(code) {
 			return activeRooms[i];
 		}
 	}
+	//return false;
+	console.log("could not find room");
 }
+function addUserToRoom(code, username) {
+	for(var i = 0; i < activeRooms.length; i++) {
+		if(activeRooms[i].roomCode === code) {
+			var user = {
+						name: username,
+						alive: true,
+						role: "citizen"
+					}
+			activeRooms[i].users.push(user);
+		}
+	}
+}
+
 
 //Not needed
 
