@@ -15,7 +15,7 @@ block content
 			button.btn.btn-secondary.btn-lg.btn-block.btn-main#joinBtn Join Game
 	
 	div#createDiv.hidden
-		div#createForm
+		div.notAForm#createForm
 			div.form-group
 				label(for="name") Your Name
 				input.form-control#createName(placeholder="Name" name="name")
@@ -30,7 +30,7 @@ block content
 			button.btn.btn-primary.btn-block#createSubmit Create Game
 	
 	div#joinDiv.hidden
-		form#joinForm
+		div.notAForm#joinForm
 			div.form-group
 				label(for="name") Name
 				input.form-control#joinName(type="text", placeholder="Your Name", name="name")
@@ -73,7 +73,7 @@ block content
 		var waitingRoom			=	$('#waitingRoom');
 			var playerList		=	$('#playerList');
 			
-		var roomCode = "";
+		var roomCode = "", name = "";
 		
 		createBtn.click(function() {
 			createDiv.removeClass('hidden').addClass('vertical-center');
@@ -87,11 +87,26 @@ block content
 			
 		createSubmit.click(function() {
 			roomCode = createRoomCode();
-			console.log(createName.val() + " attempting to join " + roomCode);
-			socket.emit('join', roomCode);
+			name = createName.val();
+			console.log(name + " attempting to join " + roomCode);
+			socket.emit('join', roomCode, name);
 			
 			createDiv.removeClass('vertical-center').addClass('hidden');
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
+		});
+		
+		joinSubmit.click(function() {
+			roomCode = joinCode.val();
+			name = joinName.val();
+			console.log(name + " attempting to join " + roomCode);
+			
+			joinDiv.removeClass('vertical-center').addClass('hidden');
+			waitingRoom.addClass('vertical-center').removeClass('hidden');
+			socket.emit('join', roomCode, name);
+		});
+		
+		socket.on('newUser', function(username) {
+			console.log(username);
 		});
 		
 		function createRoomCode() {

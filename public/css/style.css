@@ -19,7 +19,7 @@ html {
     position: fixed;
 }
 
-#createForm {
+.notAForm {
     width: 100%;
 }
 
