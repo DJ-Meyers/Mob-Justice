@@ -15,7 +15,7 @@ var socket   = require('socket.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
 
-var activeGames = [];
+var activeRooms = [];
 
 
 // Helper functions
@@ -34,9 +34,24 @@ server.listen(conf.PORT, conf.HOST, () => {
 });
 
 io.on('connection', function(socket) {
-	socket.on('join', function(roomCode) {
+	socket.on('join', function(roomCode, username) {
 		socket.join(roomCode);
-		console.log('New Connection to room: ' + roomCode);
+		console.log(username + ' has connected to room: ' + roomCode);
+
+
+		//Add the room to activeRooms
+		var room = findRoom(roomCode);
+		if(!room) {
+			room = {
+				roomCode: roomCode,
+				users: [username]
+			};
+			activeRooms.push(room);
+		} else {
+			room.users.push(username);
+			io.to(roomCode).emit('newUser', username);
+		}
+		console.log(activeRooms);
 	});
 });
 
@@ -46,6 +61,29 @@ io.on('connection', function(socket) {
 app.get('/', (req, res) => {
 	res.render('index', {title: 'Mob Justice'});
 });
+
+function createRoomCode() {
+	var code = "";
+	for(var i = 0; i < 4; i++) {
+		var letter = String.fromCharCode(Math.random() * (26) + 65);
+		code += letter;
+	}
+	console.log(code);
+	return code;
+}
+
+function findRoom(code) {
+	for(var i = 0; i < activeRooms.length; i++) {
+		//console.log(i + ": " + activeRooms[i]);
+		var roomCode = activeRooms[i].roomCode;
+		if(roomCode === code) {
+			return activeRooms[i];
+		}
+	}
+}
+
+//Not needed
+
 
 app.get('/join', (req, res) => {
 	res.render('join', {title: 'Mob Justice - Join'});
@@ -159,24 +197,4 @@ function setupSocket() {
 		console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
 	});
 
-}
-
-function createRoomCode() {
-	var code = "";
-	for(var i = 0; i < 4; i++) {
-		var letter = String.fromCharCode(Math.random() * (26) + 65);
-		code += letter;
-	}
-	console.log(code);
-	return code;
-}
-
-function findRoom(code) {
-	for(var i = 0; i < activeGames.length; i++) {
-		console.log(i + ": " + activeGames[i]);
-		var roomCode = activeGames[i].roomCode;
-		if(roomCode === code) {
-			return activeGames[i];
-		}
-	}
 }
