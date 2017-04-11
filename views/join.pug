@@ -3,12 +3,12 @@ extends base
 //- The visual portion of the page
 block content
 	div.vertical-center
-		form
+		form(method="post" action="/joinGame")
 			div.form-group
 				label(for="name") Name
-				input.form-control#name(type="text", placeholder="Your Name")
+				input.form-control#name(type="text", placeholder="Your Name", name="name")
 			div.form-group
 				label(for="roomId") Room ID
-				input.form-control#roomId(type="text", placeholder="Room ID")
+				input.form-control#roomId(type="text", placeholder="Room ID", name="roomCode")
 			div.form-group
-				button.btn.btn-primary.btn-block.btn-main Join Game
+				button.btn.btn-primary.btn-block.btn-main(type="submit") Join Game

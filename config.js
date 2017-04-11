@@ -5,7 +5,7 @@
  */
 var path = require('path');
 
-var localhost = '127.0.0.1', ip = '100.65.0.137';
+var localhost = '127.0.0.1', ip = '192.168.1.3';
 //var ufIP = '10.136.28.45'
 module.exports = {
 

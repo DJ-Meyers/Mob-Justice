@@ -14,6 +14,7 @@ var pug       = require('pug');
 var sockets   = require('socket.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
+var activeGames = [];
 
 setupExpress();
 setupSocket();
@@ -26,7 +27,6 @@ function setupExpress() {
 	var publicDir = path.join(__dirname, 'public');
 	app.use(express.static(publicDir));
 
-	var activeGames = [];
 
 	// Setup the paths (Insert any other needed paths here)
 	// ------------------------------------------------------------------------
@@ -67,10 +67,11 @@ function setupExpress() {
 		}
 
 		var user = {
-			name:req.body.name
+			name:req.body.name,
+			role:"citizen"
 		};
 
-		users.push(user);
+		//users.push(user);
 
 		var newGame = {
 			roomCode:createRoomCode(),
@@ -80,9 +81,26 @@ function setupExpress() {
 		};
 
 		activeGames.push(newGame);
-		console.log(user.name + "created: " + newGame);
+		console.log(user.name + " created: " + newGame);
 		console.log(activeGames);
 		res.end(JSON.stringify(newGame));
+	});
+
+	// Post Request to create new room
+	app.post('/joinGame', urlencodedParser, (req, res) => {
+		//Find room with given code
+		var room = findRoom(req.body.roomCode);
+
+		//Add user to that room
+		var user = {
+			name:req.body.name,
+			role:"citizen"
+		};
+
+		room.users.push(user);
+		console.log(room);
+
+		res.end(JSON.stringify(user));
 	});
 
 	// Basic 404 Page
@@ -130,4 +148,14 @@ function createRoomCode() {
 	}
 	console.log(code);
 	return code;
+}
+
+function findRoom(code) {
+	for(var i = 0; i < activeGames.length; i++) {
+		console.log(i + ": " + activeGames[i]);
+		var roomCode = activeGames[i].roomCode;
+		if(roomCode === code) {
+			return activeGames[i];
+		}
+	}
 }
