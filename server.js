@@ -17,128 +17,139 @@ var conf      = require(path.join(__dirname, 'config'));
 
 var activeGames = [];
 
-setupExpress();
-setupSocket();
 
 // Helper functions
-function setupExpress() {
-	app.set('view engine', 'pug'); // Set express to use pug for rendering HTML
 
-	// Setup the 'public' folder to be statically accessable
-	var publicDir = path.join(__dirname, 'public');
-	app.use(express.static(publicDir));
+app.set('view engine', 'pug'); // Set express to use pug for rendering HTML
 
+// Setup the 'public' folder to be statically accessable
+var publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
 
-	// Setup the paths (Insert any other needed paths here)
-	// ------------------------------------------------------------------------
-	// Home page
-	app.get('/', (req, res) => {
-		res.render('index', {title: 'Mob Justice'});
+var server = require('http').createServer(app);
+var io = socket(server);
+
+server.listen(conf.PORT, conf.HOST, () => {
+	console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
+});
+
+io.on('connection', function(socket) {
+	socket.on('join', function(roomCode) {
+		socket.join(roomCode);
+		console.log('New Connection to room: ' + roomCode);
 	});
+});
 
-	app.get('/join', (req, res) => {
-		res.render('join', {title: 'Mob Justice - Join'});
-	});
+// Setup the paths (Insert any other needed paths here)
+// ------------------------------------------------------------------------
+// Home page
+app.get('/', (req, res) => {
+	res.render('index', {title: 'Mob Justice'});
+});
 
-	app.get('/play', (req, res) => {
-		res.render('play', {title: 'Mob Justice - Play'});
-	});
+app.get('/join', (req, res) => {
+	res.render('join', {title: 'Mob Justice - Join'});
+});
 
-	app.get('/create', (req, res) => {
-		res.render('create', {title: 'Mob Justice - Create'});
-	});
+app.get('/play', (req, res) => {
+	res.render('play', {title: 'Mob Justice - Play'});
+});
 
-	app.get('/about', (req, res) => {
-		res.render('about', {title: 'Mob Justice - About'});
-	});
+app.get('/create', (req, res) => {
+	res.render('create', {title: 'Mob Justice - Create'});
+});
 
-	app.get('/creators', (req, res) => {
-		res.render('creators', {title: 'Mob Justice - Creators'});
-	});
+app.get('/about', (req, res) => {
+	res.render('about', {title: 'Mob Justice - About'});
+});
 
-
-	// Post Request to create new room
-	app.post('/newGame', urlencodedParser, (req, res) => {
-		//Initialize doctor and detective to off
-		var doctor = 'off', detective = 'off';
-		var users = [];
-
-		//If they're included in the form submission, set them to on.
-		if(req.body.doctor) {
-			doctor = 'on';
-		}
-		if(req.body.detective) {
-			detective = 'on';
-		}
-
-		var user = {
-			name:req.body.name,
-			role:"citizen"
-		};
-
-		//users.push(user);
-
-		var newGame = {
-			roomCode:createRoomCode(),
-			doctor:doctor,
-			detective:detective,
-			users: [user]
-		};
-
-		activeGames.push(newGame);
-		console.log(user.name + " created: " + newGame);
-		console.log(activeGames);
+app.get('/creators', (req, res) => {
+	res.render('creators', {title: 'Mob Justice - Creators'});
+});
 
 
-		// Connect to the room.
+// Post Request to create new room
+app.post('/newGame', urlencodedParser, (req, res) => {
+	//Initialize doctor and detective to off
+	var doctor = 'off', detective = 'off';
+	var users = [];
 
-	res.end(JSON.stringify(newGame));
-	});
+	//If they're included in the form submission, set them to on.
+	if(req.body.doctor) {
+		doctor = 'on';
+	}
+	if(req.body.detective) {
+		detective = 'on';
+	}
 
-	// Post Request to create new room
-	app.post('/joinGame', urlencodedParser, (req, res) => {
-		//Find room with given code
-		var room = findRoom(req.body.roomCode);
+	var user = {
+		name:req.body.name,
+		role:"citizen"
+	};
 
-		//Add user to that room
-		var user = {
-			name:req.body.name,
-			role:"citizen"
-		};
+	//users.push(user);
 
-		room.users.push(user);
-		console.log(room);
+	var newGame = {
+		roomCode:createRoomCode(),
+		doctor:doctor,
+		detective:detective,
+		users: [user]
+	};
 
-		res.end(JSON.stringify(user));
-	});
+	activeGames.push(newGame);
+	console.log(user.name + " created: " + newGame);
+	console.log(activeGames);
 
-	// Basic 404 Page
-	app.use((req, res, next) => {
-		var err = {
-			stack: {},
-			status: 404,
-			message: "Error 404: Page Not Found '" + req.path + "'"
-		};
 
-		// Pass the error to the error handler below
-		next(err);
-	});
+	// Connect to the room.
 
-	// Error handler
-	app.use((err, req, res, next) => {
-		console.log("Error found: ", err);
-		res.status(err.status || 500);
+res.end(JSON.stringify(newGame));
+});
 
-		res.render('error', {title: 'Error', error: err.message});
-	});
-	// ------------------------------------------------------------------------
+// Post Request to create new room
+app.post('/joinGame', urlencodedParser, (req, res) => {
+	//Find room with given code
+	var room = findRoom(req.body.roomCode);
 
-	// Handle killing the server
-	process.on('SIGINT', () => {
-		internals.stop();
-		process.kill(process.pid);
-	});
-}
+	//Add user to that room
+	var user = {
+		name:req.body.name,
+		role:"citizen"
+	};
+
+	room.users.push(user);
+	console.log(room);
+
+	res.end(JSON.stringify(user));
+});
+
+// Basic 404 Page
+app.use((req, res, next) => {
+	var err = {
+		stack: {},
+		status: 404,
+		message: "Error 404: Page Not Found '" + req.path + "'"
+	};
+
+	// Pass the error to the error handler below
+	next(err);
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+	console.log("Error found: ", err);
+	res.status(err.status || 500);
+
+	res.render('error', {title: 'Error', error: err.message});
+});
+// ------------------------------------------------------------------------
+
+// Handle killing the server
+process.on('SIGINT', () => {
+	internals.stop();
+	process.kill(process.pid);
+});
+
 
 function setupSocket() {
 	var server = require('http').createServer(app);
