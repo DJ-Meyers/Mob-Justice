@@ -112,7 +112,7 @@ block content
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
 			
 			console.log(name + " attempting to join " + roomCode);
-			socket.emit('join', roomCode, name);
+			socket.emit('create', roomCode, name);
 			
 			roomCodeHeader.text(roomCode);
 			

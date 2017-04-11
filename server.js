@@ -34,40 +34,73 @@ server.listen(conf.PORT, conf.HOST, () => {
 });
 
 io.on('connection', function(socket) {
+	//TODO join
 	socket.on('join', function(roomCode, username) {
+		/*
+			Below is the old logic that was used when everything used join.  Use simple logic like
+			checking if the roomCode is in activeRooms[].  If it is, do socket.join(roomCode), and
+			add the user onto the list of users for that room.  Otherwise, console.log that
+			<username> tried to access a room that doesn't exist.  This way, users won't
+			accidentally create new rooms when entering the wrong room code.
+		*/
+
+		// socket.join(roomCode);
+		// console.log(username + ' has connected to room: ' + roomCode);
+		//
+		// var user = {
+		// 	name: username,
+		// 	alive: true,
+		// 	role: "citizen"
+		// }
+		// //Add the room to activeRooms
+		// console.log(user);
+		// var users = [user];
+		// var room = findRoom(roomCode);
+		// if(!room) {
+		// 	room = {
+		// 		roomCode: roomCode,
+		// 		users: users,
+		// 		started: false
+		// 	};
+		// 	activeRooms.push(room);
+		// 	io.to(roomCode).emit('newUser', username);
+		// } else {
+		// 	if(!room.started) {
+		// 		room.users.push(user);
+		// 		io.to(roomCode).emit('newUser', username);
+		// 	} else {
+		// 		console.log( username + ' is attempting to join has already begun.');
+		// 	}
+		// }
+		// console.log(activeRooms);
+	});
+
+	socket.on('create', function(roomCode, username) {
+
+		//Connect to the room (Creates a new room, assuming a room with this code doesn't exist.  That should VERY rarely happen.  1/26^4)
 		socket.join(roomCode);
 		console.log(username + ' has connected to room: ' + roomCode);
 
+		//Declare this user
 		var user = {
 			name: username,
 			alive: true,
 			role: "citizen"
 		}
-		//Add the room to activeRooms
-		console.log(user);
-		var users = [user];
-		var room = findRoom(roomCode);
-		if(!room) {
-			room = {
-				roomCode: roomCode,
-				users: users,
-				started: false
-			};
-			activeRooms.push(room);
-			io.to(roomCode).emit('newUser', username);
-		} else {
-			if(!room.started) {
-				room.users.push(user);
-				io.to(roomCode).emit('newUser', username);
-			} else {
-				console.log( username + ' is attempting to join has already begun.');
-			}
-		}
-		console.log(activeRooms);
-	});
 
-	//TODO create
-	//socket.on('')
+		//Add the room to activeRooms
+		var users = [user];
+		var room = {
+			roomCode: roomCode,
+			users: users,
+			started: false
+		};
+		activeRooms.push(room);
+
+		//Send the newUser message to clients that are listening on roomCode
+		io.to(roomCode).emit('newUser', username);
+
+	});
 
 	socket.on('startGame', function(roomCode) {
 		console.log('Starting Game: ' + roomCode);
