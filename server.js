@@ -11,13 +11,13 @@ var express   = require('express'),
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 var pug       = require('pug');
-var dynamic   = require('dynamic.io');
+var socket   = require('socket.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
 var activeGames = [];
 
 setupExpress();
-setupDynamic();
+setupSocket();
 
 // Helper functions
 function setupExpress() {
@@ -87,7 +87,9 @@ function setupExpress() {
 		console.log(user.name + " created: " + newGame);
 		console.log(activeGames);
 
-		//var socket = dynamic(roomCode);
+		// Connect to the room.
+
+
 		res.end(JSON.stringify(newGame));
 	});
 
@@ -135,11 +137,11 @@ function setupExpress() {
 	});
 }
 
-function setupDynamic() {
+function setupSocket() {
 	var server = require('http').createServer(app);
-	var io = dynamic(server);
+	var io = socket(server);
 
-	// io.setupNamespace('*', function(namespace) {
+	// io.setupNamespace(/.*/, function(namespace) {
 	// 	namespace.retirement = Math.max(namespace.retirement, 30 * 1000);
 	//
 	// 	namespace.on('connect', function(socket) {
@@ -152,8 +154,9 @@ function setupDynamic() {
 	// });
 
 	server.listen(conf.PORT, conf.HOST, () => {
-		console.log("Listening on: " + conf.HOST + ":" + conf.PORT);
+		console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
 	});
+
 }
 
 function createRoomCode() {
