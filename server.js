@@ -11,13 +11,13 @@ var express   = require('express'),
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 var pug       = require('pug');
-var dynamic   = require('dynamic.io');
+var socket   = require('socket.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
 var activeGames = [];
 
 setupExpress();
-setupDynamic();
+setupSocket();
 
 // Helper functions
 function setupExpress() {
@@ -87,7 +87,11 @@ function setupExpress() {
 		activeGames.push(newGame);
 		console.log(user.name + " created: " + newGame);
 		console.log(activeGames);
-		res.end(JSON.stringify(newGame));
+
+
+		// Connect to the room.
+
+	res.end(JSON.stringify(newGame));
 	});
 
 	// Post Request to create new room
@@ -135,25 +139,15 @@ function setupExpress() {
 	});
 }
 
-function setupDynamic() {
+function setupSocket() {
 	var server = require('http').createServer(app);
-	var io = dynamic(server);
+	var io = socket(server);
 
-	io.setupNamespace('*', function(namespace) {
-		namespace.retirement = Math.max(namespace.retirement, 30 * 1000);
 
-		namespace.on('connect', function(socket) {
-			console.log('New connection to ', namespace.fullname());
-			socket.on('disconnect', function() {
-				console.log('Disconnection from ', namespace.fullname());
-			});
-		});
-		return true;
+	server.listen(conf.PORT, conf.HOST, () => {
+		console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
 	});
 
-	io.listen(conf.PORT, conf.HOST, () => {
-		console.log("Listening on: " + conf.HOST + ":" + conf.PORT);
-	});
 }
 
 function createRoomCode() {
