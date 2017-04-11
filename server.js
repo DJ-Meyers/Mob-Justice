@@ -44,9 +44,11 @@ io.on('connection', function(socket) {
 		if(!room) {
 			room = {
 				roomCode: roomCode,
-				users: [username]
+				users: [username],
+				started: false
 			};
 			activeRooms.push(room);
+			io.to(roomCode).emit('newUser', username);
 		} else {
 			room.users.push(username);
 			io.to(roomCode).emit('newUser', username);

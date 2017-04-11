@@ -43,12 +43,14 @@ block content
 	div#waitingRoom.hidden
 		div.card.middle-align.mid 
 			div.card-block
-				h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.    
+				h4.card-title.alert.alert-info.align-middle(role="alert")
+					strong Room Code: 
+					span#roomCodeHeader    
 			ul.list-group.align-middle.list-group-flush#playerList
-				li.list-group-item.list-group-item-action Spencer 
-				li.list-group-item.list-group-item-action DJ 
-				li.list-group-item.list-group-item-action Bridget
-				li.list-group-item.list-group-item-action.disabled Khari
+				//- li.list-group-item.list-group-item-action Spencer 
+				//- li.list-group-item.list-group-item-action DJ 
+				//- li.list-group-item.list-group-item-action Bridget
+				//- li.list-group-item.list-group-item-action.disabled Khari
 			div.card-block
 					
 	script(type="text/javascript", src="/socket.io/socket.io.js")
@@ -71,6 +73,7 @@ block content
 			var joinSubmit		=	$('#joinSubmit');
 			
 		var waitingRoom			=	$('#waitingRoom');
+			var roomCodeHeader	=	$('#roomCodeHeader');
 			var playerList		=	$('#playerList');
 			
 		var roomCode = "", name = "";
@@ -93,6 +96,8 @@ block content
 			
 			createDiv.removeClass('vertical-center').addClass('hidden');
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
+			
+			roomCodeHeader.text(roomCode);
 		});
 		
 		joinSubmit.click(function() {
@@ -102,11 +107,18 @@ block content
 			
 			joinDiv.removeClass('vertical-center').addClass('hidden');
 			waitingRoom.addClass('vertical-center').removeClass('hidden');
+			
+			for()
+			
 			socket.emit('join', roomCode, name);
 		});
 		
 		socket.on('newUser', function(username) {
-			console.log(username);
+			var thisPlayer = document.createElement('li');
+			thisPlayer.classList.add('list-group-item','list-group-item-action');
+
+			thisPlayer.appendChild(document.createTextNode(username));
+			$('#playerList').append(thisPlayer);
 		});
 		
 		function createRoomCode() {
