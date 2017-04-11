@@ -9,7 +9,98 @@ extends base
 
 //- The visual portion of the page
 block content
-	div.vertical-center
+	div.vertical-center#landing
 		div.btn-group-vertical.btn-group-lg.btn-block
-			button.btn.btn-primary.btn-lg.btn-block.btn-main(onclick="location.href='/create'") Create Game
-			button.btn.btn-secondary.btn-lg.btn-block.btn-main(onclick="location.href='/join'") Join Game
+			button.btn.btn-primary.btn-lg.btn-block.btn-main#createBtn Create Game
+			button.btn.btn-secondary.btn-lg.btn-block.btn-main#joinBtn Join Game
+	
+	div#createDiv.hidden
+		div#createForm
+			div.form-group
+				label(for="name") Your Name
+				input.form-control#createName(placeholder="Name" name="name")
+			//- div.form-check
+			//- 	label.form-check-label
+			//- 		input.form-check-input#doctor(type="checkbox" name="doctor" checked)
+			//- 		span Doctor: Prevent a citizen's death each night
+			//- div.form-check
+			//- 	label.form-check-label
+			//- 		input.form-check-input#detective(type="checkbox" name="detective" checked)
+			//- 		span Detective: Learn a citizen's role each night
+			button.btn.btn-primary.btn-block#createSubmit Create Game
+	
+	div#joinDiv.hidden
+		form#joinForm
+			div.form-group
+				label(for="name") Name
+				input.form-control#joinName(type="text", placeholder="Your Name", name="name")
+			div.form-group
+				label(for="roomId") Room ID
+				input.form-control#joinCode(type="text", placeholder="Room ID", name="roomCode")
+			div.form-group
+				button.btn.btn-primary.btn-block.btn-main#joinSubmit Join Game
+				
+	div#waitingRoom.hidden
+		div.card.middle-align.mid 
+			div.card-block
+				h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.    
+			ul.list-group.align-middle.list-group-flush#playerList
+				li.list-group-item.list-group-item-action Spencer 
+				li.list-group-item.list-group-item-action DJ 
+				li.list-group-item.list-group-item-action Bridget
+				li.list-group-item.list-group-item-action.disabled Khari
+			div.card-block
+					
+	script(type="text/javascript", src="/socket.io/socket.io.js")
+	script(type="text/javascript", src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js")
+	script(type="text/javascript").
+		var socket = io.connect();
+		
+		//Cancer
+		var landing 			=	$('#landing');
+			var createBtn 		=	$('#createBtn');
+			var joinBtn			=	$('#joinBtn');
+		
+		var createDiv			=	$('#createDiv');
+			var createName		= 	$('#createName');
+			var createSubmit	=	$('#createSubmit');
+		
+		var joinDiv				=	$('#joinDiv');
+			var joinName		=	$('#joinName');
+			var joinCode		=	$('#joinCode');
+			var joinSubmit		=	$('#joinSubmit');
+			
+		var waitingRoom			=	$('#waitingRoom');
+			var playerList		=	$('#playerList');
+			
+		var roomCode = "";
+		
+		createBtn.click(function() {
+			createDiv.removeClass('hidden').addClass('vertical-center');
+			landing.addClass('hidden').removeClass('vertical-center');
+		});
+		
+		joinBtn.click(function() {
+			joinDiv.removeClass('hidden').addClass('vertical-center');
+			landing.addClass('hidden').removeClass('vertical-center');
+		});
+			
+		createSubmit.click(function() {
+			roomCode = createRoomCode();
+			console.log(createName.val() + " attempting to join " + roomCode);
+			socket.emit('join', roomCode);
+			
+			createDiv.removeClass('vertical-center').addClass('hidden');
+			waitingRoom.addClass('vertical-center').removeClass('hidden');
+		});
+		
+		function createRoomCode() {
+			var code = "";
+			for(var i = 0; i < 4; i++) {
+				var letter = String.fromCharCode(Math.random() * (26) + 65);
+				code += letter;
+			}
+			//- console.log(code);
+			return code;
+		}
+		

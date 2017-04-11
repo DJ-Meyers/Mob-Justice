@@ -10,6 +10,14 @@ html {
     position: absolute;
 }
 
+.hidden {
+    visibility: hidden;
+    position: fixed;
+}
+
+#createForm {
+    width: 100%;
+}
 
 .container, .co {
     width: auto;
