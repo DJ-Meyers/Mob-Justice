@@ -16,7 +16,7 @@ html {
     max-width: 900px;
     padding: 0 15px;
 }
-.list-group, .mid{
+.mid{
   min-width: 300px;
   margin-left: auto;
   margin-right: auto;
