@@ -47,8 +47,8 @@ block content
 					strong Room Code: 
 					span#roomCodeHeader
 			ul.list-group.align-middle.list-group-flush#waitPlayerList
-			div.card-block
-				button.btn.btn-primary.btn-block#goToVoting(type="button") Submit
+			div.card-block#startButtonDiv
+				//- button.btn.btn-primary.btn-block#startGame(type="button") Start
 				
 	div#votingRoom.hidden
 		div.card.middle-align.mid 
@@ -115,6 +115,23 @@ block content
 			socket.emit('join', roomCode, name);
 			
 			roomCodeHeader.text(roomCode);
+			
+			
+			
+			var startButton = document.createElement('button');
+			startButton.classList.add('btn','btn-primary','btn-block');
+			startButton.appendChild(document.createTextNode('Start Game'));
+			startButton.addEventListener('click', function() {
+				//- var postURL = 'http://192.168.1.3:3000/startGame/' + roomCode;
+				//- var xmlHttp = new XMLHttpRequest();
+				//- xmlHttp.open("POST", postURL, false);
+				//- xmlHttp.send();
+				
+				socket.emit('startGame', roomCode);
+			});
+
+			
+			$('#startButtonDiv').append(startButton);
 		});
 		
 		joinSubmit.click(function() {
@@ -130,6 +147,7 @@ block content
 			xmlHttp.open("GET", getURL, false);
 			xmlHttp.send();
 			var currentUsers = JSON.parse(xmlHttp.responseText);
+			console.log(currentUsers);
 			
 			for(var u = 0; u < currentUsers.length; u++) {
 				addUserToWaitPlayerList(currentUsers[u]);
@@ -139,11 +157,22 @@ block content
 			socket.emit('join', roomCode, name);
 			
 			roomCodeHeader.text(roomCode);
+			
+			var startButton = document.createElement('button');
+			startButton.classList.add('btn','btn-primary','btn-block');
+			startButton.disabled = true;
+			startButton.appendChild(document.createTextNode('Wait on leader to start'));
+			
+			$('#startButtonDiv').append(startButton);
 		});
 		
 		socket.on('newUser', function(username) {
 			addUserToWaitPlayerList(username);
 		});
+		
+		socket.on('gameStarted', function() {
+			console.log('Game starting');
+		}); 
 		
 		joinVoting.click(function() {
 
@@ -187,10 +216,20 @@ block content
 		
 		function addUserToWaitPlayerList(username) {
 			var thisPlayer = document.createElement('li');
-			thisPlayer.classList.add('list-group-item','list-group-item-action');
+			thisPlayer.classList.add('list-group-item','justify-content-between');
 
 			thisPlayer.appendChild(document.createTextNode(username));
-			$('#waitPlayerList').append(thisPlayer);
+			
+			if(waitPlayerList.children().length === 0) {
+				var leaderBadge = document.createElement('span');
+				leaderBadge.classList.add('badge','badge-success','badge-pill');
+				leaderBadge.appendChild(document.createTextNode('Leader'));
+				thisPlayer.appendChild(leaderBadge);
+			}
+			
+			waitPlayerList.append(thisPlayer);
+			
+			
 		}
 		
 		function createRoomCode() {

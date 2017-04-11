@@ -38,22 +38,43 @@ io.on('connection', function(socket) {
 		socket.join(roomCode);
 		console.log(username + ' has connected to room: ' + roomCode);
 
-
+		var user = {
+			name: username,
+			alive: true,
+			role: "citizen"
+		}
 		//Add the room to activeRooms
+		console.log(user);
+		var users = [user];
 		var room = findRoom(roomCode);
 		if(!room) {
 			room = {
 				roomCode: roomCode,
-				users: [username],
+				users: users,
 				started: false
 			};
 			activeRooms.push(room);
 			io.to(roomCode).emit('newUser', username);
 		} else {
-			room.users.push(username);
-			io.to(roomCode).emit('newUser', username);
+			if(!room.started) {
+				room.users.push(user);
+				io.to(roomCode).emit('newUser', username);
+			} else {
+				console.log( username + ' is attempting to join has already begun.');
+			}
 		}
 		console.log(activeRooms);
+	});
+
+	//TODO create
+	//socket.on('')
+
+	socket.on('startGame', function(roomCode) {
+		console.log('Starting Game: ' + roomCode);
+		var room = findRoom(roomCode);
+		// console.log(room);
+		room.started = true;
+		io.to(roomCode).emit('gameStarted');
 	});
 });
 
@@ -66,8 +87,23 @@ app.get('/', (req, res) => {
 
 app.get('/currentUsers/:roomCode', (req, res) => {
 	var room = findRoom(req.params.roomCode);
-	res.send(room.users);
+	//console.log(room.users);
+	var names = [];
+	for(var u = 0; u < room.users.length; u++) {
+		var thisName = room.users[u].name;
+		//console.log(thisName);
+		names.push(thisName);
+	}
+	// console.log(names);
+	res.send(JSON.stringify(names));
 });
+
+app.post('/startGame/:roomCode', (req, res) => {
+	var room = findRoom(req.params.roomCode);
+	room.started = true;
+	console.log('Starting Game: ' + req.params.roomCode);
+	io.to(req.params.roomCode).emit('gameStarted');
+})
 
 function createRoomCode() {
 	var code = "";
