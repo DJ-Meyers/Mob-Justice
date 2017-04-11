@@ -11,13 +11,13 @@ var express   = require('express'),
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 var pug       = require('pug');
-var sockets   = require('socket.io');
+var dynamic   = require('dynamic.io');
 var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
 var activeGames = [];
 
 setupExpress();
-setupSocket();
+setupDynamic();
 
 // Helper functions
 function setupExpress() {
@@ -131,11 +131,23 @@ function setupExpress() {
 	});
 }
 
-function setupSocket() {
+function setupDynamic() {
 	var server = require('http').createServer(app);
-	var io = sockets(server);
+	var io = dynamic(server);
 
-	server.listen(conf.PORT, conf.HOST, () => {
+	io.setupNamespace('*', function(namespace) {
+		namespace.retirement = Math.max(namespace.retirement, 30 * 1000);
+
+		namespace.on('connect', function(socket) {
+			console.log('New connection to ', namespace.fullname());
+			socket.on('disconnect', function() {
+				console.log('Disconnection from ', namespace.fullname());
+			});
+		});
+		return true;
+	});
+
+	io.listen(conf.PORT, conf.HOST, () => {
 		console.log("Listening on: " + conf.HOST + ":" + conf.PORT);
 	});
 }
