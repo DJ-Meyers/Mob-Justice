@@ -19,14 +19,6 @@ block content
             div.form-group
                 label(for="name") Your Name
                 input.form-control#createName(placeholder="Name" name="name")
-            //- div.form-check
-            //- 	label.form-check-label
-            //- 		input.form-check-input#doctor(type="checkbox" name="doctor" checked)
-            //- 		span Doctor: Prevent a citizen's death each night
-            //- div.form-check
-            //- 	label.form-check-label
-            //- 		input.form-check-input#detective(type="checkbox" name="detective" checked)
-            //- 		span Detective: Learn a citizen's role each night
             button.btn.btn-primary.btn-block#createSubmit Create Game
 
     div#joinDiv.hidden
@@ -40,30 +32,42 @@ block content
             div.form-group
                 button.btn.btn-primary.btn-block.btn-main#joinSubmit Join Game
 
-    div#waitingRoom.hidden
+    div#gameRoom.hidden
         div.card
             div.card-block
-                h4.card-title.alert.alert-info.align-middle.roomCodeTitle(role="alert")
+                h4.card-title.alert.alert-info.align-middle#roomCodeTitle(role="alert")
                     strong Room Code: 
-                    span#roomCodeHeader
-            ul.list-group.align-middle.list-group-flush#waitPlayerList
-            div.card-block#startButtonDiv
+                    span#roomCodeSpan
+                    span#phase  - Game Lobby
+            ul.list-group.align-middle.list-group-flush#gamePlayerList
+            div.card-block#voteButtonDiv
             //- button.btn.btn-primary.btn-block#startGame(type="button") Start
-    div#dayWaitingRoom.hidden
-        div.card.text-center.mid
-            div.card-block
-                h4.card-title Special title treatment
-                    p.card-text With supporting text below as a natural laed-in to additional context
-                        button.btn.btn-primary(type="button" data-toggle="collapse" data-target="#collapseExample" aria-expended="false" aria-controls="collapseExample") 
-                        div.collapse#collapseExample Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
-
-    div#votingRoom.hidden
-        div.card.middle-align.mid 
-            div.card-block
-                h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.
-            ul.list-group.align-middle.list-group-flush#playerList
-            div.card-block
-                button.btn.btn-outline-primary#submit(type="button") Submit
+    //-         
+    //- div.hidden#day
+    //-     div.card
+    //-         div.card-block
+    //-             h4.card-title.alert.alert-info.align-middle.roomCodeTitle(role="alert")
+    //-                 strong Room Code: 
+    //-                 span.roomCodeSpan
+    //-                 span.phase - Day
+    //-         ul.list-group.align-middle.list-group-flush#dayPlayerList
+    //-         div.card-block#daySubmitButton
+    //-     
+    //- div#dayWaitingRoom.hidden
+    //-     div.card.text-center.mid
+    //-         div.card-block
+    //-             h4.card-title Special title treatment
+    //-                 p.card-text With supporting text below as a natural laed-in to additional context
+    //-                     button.btn.btn-primary(type="button" data-toggle="collapse" data-target="#collapseExample" aria-expended="false" aria-controls="collapseExample") 
+    //-                     div.collapse#collapseExample Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
+    //- 
+    //- div#votingRoom.hidden
+    //-     div.card.middle-align.mid 
+    //-         div.card-block
+    //-             h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.
+    //-         ul.list-group.align-middle.list-group-flush#playerList
+    //-         div.card-block
+    //-             button.btn.btn-outline-primary#submit(type="button") Submit
 
     script(type="text/javascript", src="/socket.io/socket.io.js")
     script(type="text/javascript", src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js")
@@ -84,24 +88,23 @@ block content
             var joinCode		=	$('#joinCode');
             var joinSubmit		=	$('#joinSubmit');
 
-        var waitingRoom			=	$('#waitingRoom');
-            var roomCodeHeader	=	$('#roomCodeHeader');
-            var waitPlayerList	=	$('#waitPlayerList');
+        var gameRoom			=	$('#gameRoom');
+            var roomCodeTitle   =   $('#roomCodeTitle');
+            var roomCodeSpan	=	$('#roomCodeSpan');
+            var phase           =   $('#phase');
+            var gamePlayerList	=	$('#gamePlayerList');
 
         var votingRoom			=	$('#votingRoom');
             var joinVoting		= 	$('#goToVoting');
 
-        var dayWaitingRoom		= 	$('#dayWaitingRoom');
+        //- var dayWaitingRoom		= 	$('#dayWaitingRoom');
+        
+        var day
 
         var roomCode = "", name = "";
 
         var target = " ";
         var init = false;
-
-        var playerList = [{"name": "DJ", "status": "alive"},
-            {"name": "Spencer", "status": "alive"},
-            {"name": "Bridget", "status": "dead"},
-            {"name": "Khari", "status": "alive"}, ];
 
         createBtn.click(function() {
             createDiv.removeClass('hidden').addClass('vertical-center');
@@ -125,32 +128,25 @@ block content
             name = createName.val();
 
             createDiv.removeClass('vertical-center').addClass('hidden');
-            waitingRoom.addClass('long-content').removeClass('hidden');
+            gameRoom.addClass('long-content').removeClass('hidden');
 
             console.log(name + " attempting to join " + roomCode);
             socket.emit('create', roomCode, name);
 
-            roomCodeHeader.text(roomCode);
+            roomCodeSpan.text(roomCode);
 
 
 
-            var startButton = document.createElement('button');
-            startButton.classList.add('btn','btn-primary','btn-block');
-            startButton.appendChild(document.createTextNode('Start Game'));
-            startButton.addEventListener('click', function() {
-                //- var postURL = 'http://192.168.1.3:3000/startGame/' + roomCode;
-                //- var xmlHttp = new XMLHttpRequest();
-                //- xmlHttp.open("POST", postURL, false);
-                //- xmlHttp.send();
+            var voteButton = document.createElement('button');
+            voteButton.classList.add('btn','btn-primary','btn-block');
+            voteButton.appendChild(document.createTextNode('Start Game'));
+            voteButton.addEventListener('click', function() {
 
                 socket.emit('startGame', roomCode);
-                //added this part so that it goes to the next "page" which is the day waiting room
-                //- waitingRoom.removeClass('vertical-center').addClass('hidden');
-                //- dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
 
             });
 
-            $('#startButtonDiv').append(startButton);
+            $('#voteButtonDiv').append(voteButton);
         });
 
         joinSubmit.click(function() {
@@ -158,47 +154,48 @@ block content
             name = joinName.val();
 
             joinDiv.removeClass('vertical-center').addClass('hidden');
-            waitingRoom.addClass('long-content').removeClass('hidden');
+            gameRoom.addClass('long-content').removeClass('hidden');
 
             //moved this part up here so it joins you to room before printing out people in room
             console.log(name + " attempting to join " + roomCode);
             socket.emit('join', roomCode, name);
             socket.emit('getUsers',roomCode,name)
-            roomCodeHeader.text(roomCode);
+            roomCodeSpan.text(roomCode);
 
-            var startButton = document.createElement('button');
-            startButton.classList.add('btn','btn-primary','btn-block');
-            startButton.disabled = true;
-            startButton.appendChild(document.createTextNode('Wait on leader to start'));
+            var voteButton = document.createElement('button');
+            voteButton.classList.add('btn','btn-primary','btn-block');
+            voteButton.disabled = true;
+            voteButton.appendChild(document.createTextNode('Wait on leader to start'));
 
-            $('#startButtonDiv').append(startButton);
+            $('#voteButtonDiv').append(voteButton);
         });
 
         socket.on('newUser', function(username, host) {
             console.log(name+" and username: "+username);
             if(host===true || name!==username){
-                addUserToWaitPlayerList(username);}
+                addUserToGamePlayerList(username);}
         });
 
         socket.on('usersList', function( names, username ){
             if(username===name){
                 for(var i = 0;i<names.length;++i){
-                    addUserToWaitPlayerList(names[i]);
+                    addUserToGamePlayerList(names[i]);
                 }
             }
         });
 
         socket.on('gameStarted', function() {
             console.log('Game starting');
-            //this pulls everyone into the day room when game starts
-            waitingRoom.removeClass('long-content').addClass('hidden');
-            dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
+            $('.badge-pill').remove();
+            
+            //Change phase to day
+            beginDay();
 
         }); 
 
         joinVoting.click(function() {
 
-            waitingRoom.removeClass('vertical-center').addClass('hidden');
+            gameRoom.removeClass('vertical-center').addClass('hidden');
             votingRoom.addClass('vertical-center').removeClass('hidden');
 
             if(init===false){
@@ -236,21 +233,21 @@ block content
 
         });
 
-        function addUserToWaitPlayerList(username) {
-            console.log("this is called");
+        function addUserToGamePlayerList(username) {
+            //- console.log("this is called");
             var thisPlayer = document.createElement('li');
             thisPlayer.classList.add('list-group-item','justify-content-between');
 
             thisPlayer.appendChild(document.createTextNode(username));
 
-            if(waitPlayerList.children().length === 0) {
+            if(gamePlayerList.children().length === 0) {
                 var leaderBadge = document.createElement('span');
                 leaderBadge.classList.add('badge','badge-success','badge-pill');
                 leaderBadge.appendChild(document.createTextNode('Leader'));
                 thisPlayer.appendChild(leaderBadge);
             }
 
-            waitPlayerList.append(thisPlayer);
+            gamePlayerList.append(thisPlayer);
 
 
         }
@@ -263,4 +260,11 @@ block content
             }
             //- console.log(code);
             return code;
+        }
+        
+        function beginDay() {
+            //Replace Phase with Day and change Alert Color
+            phase.text(' - Day');
+            roomCodeTitle.removeClass('alert-info').addClass('alert-success');
+            
         }
