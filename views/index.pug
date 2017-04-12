@@ -43,7 +43,7 @@ block content
     div#waitingRoom.hidden
         div.card
             div.card-block
-                h4.card-title.alert.alert-info.align-middle(role="alert")
+                h4.card-title.alert.alert-info.align-middle.roomCodeTitle(role="alert")
                     strong Room Code: 
                     span#roomCodeHeader
             ul.list-group.align-middle.list-group-flush#waitPlayerList
@@ -145,11 +145,10 @@ block content
 
                 socket.emit('startGame', roomCode);
                 //added this part so that it goes to the next "page" which is the day waiting room
-                waitingRoom.removeClass('vertical-center').addClass('hidden');
-                dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
+                //- waitingRoom.removeClass('vertical-center').addClass('hidden');
+                //- dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
 
             });
-
 
             $('#startButtonDiv').append(startButton);
         });
@@ -161,25 +160,9 @@ block content
             joinDiv.removeClass('vertical-center').addClass('hidden');
             waitingRoom.addClass('long-content').removeClass('hidden');
 
-            //TODO URL
             //moved this part up here so it joins you to room before printing out people in room
             console.log(name + " attempting to join " + roomCode);
             socket.emit('join', roomCode, name);
-
-            //TODO convert this to sockets
-            /*var getURL = 'http://192.168.1.21:3000/currentUsers/' + roomCode;
-            console.log(getURL);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open("GET", getURL, false);
-            xmlHttp.send();
-            var currentUsers = JSON.parse(xmlHttp.responseText);
-            console.log(currentUsers);*/
-            socket.emit('getUsers',roomCode,name);
-            //for(var u = 0; u < currentUsers.length; u++) {
-            //only adds people that arent you, since when you join it adds you
-            //if(name!==currentUsers[u])	addUserToWaitPlayerList(currentUsers[u]);
-            //}
-
 
             roomCodeHeader.text(roomCode);
 
@@ -207,9 +190,9 @@ block content
         socket.on('gameStarted', function() {
             console.log('Game starting');
             //this pulls everyone into the day room when game starts
-            waitingRoom.removeClass('vertical-center').addClass('hidden');
+            waitingRoom.removeClass('long-content').addClass('hidden');
             dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
-
+                        
         }); 
 
         joinVoting.click(function() {
