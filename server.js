@@ -50,7 +50,7 @@ io.on('connection', function(socket) {
 
 		// socket.join(roomCode);
 		//lets you know whose joining
-		console.log(username + ' has tried to connect to room ' + roomCode);
+		// console.log(username + ' has tried to connect to room ' + roomCode);
 		var room = findRoom(roomCode);
 	    if(!room) {
 			console.log("Room " + roomCode + " doesn't exist.");
@@ -60,6 +60,7 @@ io.on('connection', function(socket) {
 				addUserToRoom(roomCode,username);//calls function that adds to room
 				var host = false;
 				io.to(roomCode).emit('newUser', username, host);
+				console.log(username + ' has connected to ' + roomCode);
 
 			// //Add the room to activeRooms
 			 //console.log(user);
@@ -131,6 +132,7 @@ io.on('connection', function(socket) {
 		var room = findRoom(roomCode);
 		// console.log(room);
 		room.started = true;
+		assignRoles(room);
 		io.to(roomCode).emit('gameStarted');
 	});
 });
@@ -185,6 +187,7 @@ function findRoom(code) {
 	//return false;
 	console.log("could not find room");
 }
+
 function addUserToRoom(code, username) {
 	//goes through, finds room, makes a user, and adds it to room's userlist
 	for(var i = 0; i < activeRooms.length; i++) {
@@ -196,6 +199,55 @@ function addUserToRoom(code, username) {
 					}
 			activeRooms[i].users.push(user);
 		}
+	}
+}
+
+function assignRoles(room) {
+	//<=7 players  -> 2 mafia
+	//<=10 players -> 3 mafia
+	//<=13 players -> 4 mafia
+	//<=16 players -> 5 mafia
+
+	var numPlayers = room.users.length;
+	var numMafia = 0, numDoc = 1, numDet = 1;
+
+	if(numPlayers <= 7) {
+		numMafia = 2;
+	} else if (numPlayers <= 10) {
+		numMafia = 3;
+	} else if (numPlayers <= 13 ) {
+		numMafia = 4;
+	} else if (numPlayers <= 16) {
+		numMafia = 5;
+	}
+
+	var index;
+	while(numMafia !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "mafia";
+			numMafia--;
+		}
+	}
+
+	while(numDoc !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "doctor";
+			numDoc--;
+		}
+	}
+
+	while(numDet !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "detective";
+			numDet--;
+		}
+	}
+
+	for(var i = 0; i < room.users.length; i++) {
+		console.log(room.users[i].name + ": " + room.users[i].role);
 	}
 }
 
