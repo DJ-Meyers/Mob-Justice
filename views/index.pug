@@ -154,6 +154,12 @@ block content
         });
 
         joinSubmit.click(function() {
+            //moved this part up here so it joins you to room before printing out people in room
+            console.log(name + " attempting to join " + roomCode);
+            socket.emit('join', joinCode.val(), joinName.val());
+            //socket.emit('getUsers',joinCode.val(),joinName.val());
+        });
+        socket.on('successJoin', function(username, host) {
             roomCode = joinCode.val();
             name = joinName.val();
 
@@ -161,8 +167,6 @@ block content
             waitingRoom.addClass('long-content').removeClass('hidden');
 
             //moved this part up here so it joins you to room before printing out people in room
-            console.log(name + " attempting to join " + roomCode);
-            socket.emit('join', roomCode, name);
             socket.emit('getUsers',roomCode,name)
             roomCodeHeader.text(roomCode);
 
@@ -174,93 +178,107 @@ block content
             $('#startButtonDiv').append(startButton);
         });
 
+
         socket.on('newUser', function(username, host) {
             console.log(name+" and username: "+username);
             if(host===true || name!==username){
                 addUserToWaitPlayerList(username);}
         });
 
-        socket.on('usersList', function( names, username ){
-            if(username===name){
-                for(var i = 0;i<names.length;++i){
-                    addUserToWaitPlayerList(names[i]);
-                }
-            }
-        });
+        socket.on('failedToCreate', function() {
+            console.log("this got called");
+            //roomCode = " ";
+            //$('#joinDiv').find('form')[0].reset();
+            joinDiv.removeClass('vertical-center').addClass('hidden');
+            landing.addClass('vertical-center').removeClass('hidden');
 
-        socket.on('gameStarted', function() {
-            console.log('Game starting');
-            //this pulls everyone into the day room when game starts
-            waitingRoom.removeClass('long-content').addClass('hidden');
-            dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
-
-        }); 
-
-        joinVoting.click(function() {
-
-            waitingRoom.removeClass('vertical-center').addClass('hidden');
-            votingRoom.addClass('vertical-center').removeClass('hidden');
-
-            if(init===false){
-                console.log("here");
-                var listGroup = document.getElementById('playerList');
-                for(var p = 0; p < playerList.length; p++) {
-                    var thisPlayer = document.createElement('li');
-                    thisPlayer.classList.add('list-group-item','list-group-item-action');
-
-                    if(playerList[p].status === "dead") {
-                        thisPlayer.classList.add('disabled');
+            });
+            socket.on('usersList', function( names, username ){
+                if(username===name){
+                    for(var i = 0;i<names.length;++i){
+                        addUserToWaitPlayerList(names[i]);
                     }
-
-                    thisPlayer.appendChild(document.createTextNode(playerList[p].name));
-                    thisPlayer.addEventListener('click', function() {
-                        /*Anything active make inactive*/
-                        if(!this.classList.contains('disabled')) {
-                            var currentActive = document.querySelectorAll('.active');
-                            for(var j = 0; j < currentActive.length; j++){
-                                currentActive[j].classList.remove('active');
-                            }
+                }
+            });
 
 
-                            this.classList.add('active');
+            socket.on('onCreate', function(msg) {
+                console.log("got pinged "+ msg);
+            });
 
-                            target = this.innerHTML;
-                            console.log(target);
+            socket.on('gameStarted', function() {
+                console.log('Game starting');
+                //this pulls everyone into the day room when game starts
+                waitingRoom.removeClass('long-content').addClass('hidden');
+                dayWaitingRoom	.addClass('vertical-center').removeClass('hidden');
+
+            }); 
+
+            joinVoting.click(function() {
+
+                waitingRoom.removeClass('vertical-center').addClass('hidden');
+                votingRoom.addClass('vertical-center').removeClass('hidden');
+
+                if(init===false){
+                    console.log("here");
+                    var listGroup = document.getElementById('playerList');
+                    for(var p = 0; p < playerList.length; p++) {
+                        var thisPlayer = document.createElement('li');
+                        thisPlayer.classList.add('list-group-item','list-group-item-action');
+
+                        if(playerList[p].status === "dead") {
+                            thisPlayer.classList.add('disabled');
                         }
 
-                    });
-                    listGroup.appendChild(thisPlayer);
-                    init = true;
+                        thisPlayer.appendChild(document.createTextNode(playerList[p].name));
+                        thisPlayer.addEventListener('click', function() {
+                            /*Anything active make inactive*/
+                            if(!this.classList.contains('disabled')) {
+                                var currentActive = document.querySelectorAll('.active');
+                                for(var j = 0; j < currentActive.length; j++){
+                                    currentActive[j].classList.remove('active');
+                                }
+
+
+                                this.classList.add('active');
+
+                                target = this.innerHTML;
+                                console.log(target);
+                            }
+
+                        });
+                        listGroup.appendChild(thisPlayer);
+                        init = true;
+                    }
                 }
+
+            });
+
+            function addUserToWaitPlayerList(username) {
+                console.log("this is called");
+                var thisPlayer = document.createElement('li');
+                thisPlayer.classList.add('list-group-item','justify-content-between');
+
+                thisPlayer.appendChild(document.createTextNode(username));
+
+                if(waitPlayerList.children().length === 0) {
+                    var leaderBadge = document.createElement('span');
+                    leaderBadge.classList.add('badge','badge-success','badge-pill');
+                    leaderBadge.appendChild(document.createTextNode('Leader'));
+                    thisPlayer.appendChild(leaderBadge);
+                }
+
+                waitPlayerList.append(thisPlayer);
+
+
             }
 
-        });
-
-        function addUserToWaitPlayerList(username) {
-            console.log("this is called");
-            var thisPlayer = document.createElement('li');
-            thisPlayer.classList.add('list-group-item','justify-content-between');
-
-            thisPlayer.appendChild(document.createTextNode(username));
-
-            if(waitPlayerList.children().length === 0) {
-                var leaderBadge = document.createElement('span');
-                leaderBadge.classList.add('badge','badge-success','badge-pill');
-                leaderBadge.appendChild(document.createTextNode('Leader'));
-                thisPlayer.appendChild(leaderBadge);
+            function createRoomCode() {
+                var code = "";
+                for(var i = 0; i < 4; i++) {
+                    var letter = String.fromCharCode(Math.random() * (26) + 65);
+                    code += letter;
+                }
+                //- console.log(code);
+                return code;
             }
-
-            waitPlayerList.append(thisPlayer);
-
-
-        }
-
-        function createRoomCode() {
-            var code = "";
-            for(var i = 0; i < 4; i++) {
-                var letter = String.fromCharCode(Math.random() * (26) + 65);
-                code += letter;
-            }
-            //- console.log(code);
-            return code;
-        }

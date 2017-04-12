@@ -18,7 +18,7 @@ var conf      = require(path.join(__dirname, 'config'));
 var activeRooms = [];
 var hashstuff = [];//name room id
 var disconnect = [];// {roomID, [name]}
-
+var hostID = 0;
 // Helper functions
 
 app.set('view engine', 'pug'); // Set express to use pug for rendering HTML
@@ -41,43 +41,61 @@ io.on('connection', function(socket) {
 		for(var j = 0; j<hashstuff.length; ++j){
 			if(socket.id===hashstuff[j].id){
 				console.log('name : '+ hashstuff[j].name+" from room" + hashstuff[j].room);
+				var done = false;
 				for(var i = 0; i<disconnect.length;++i){
 					if(hashstuff[j].room===disconnect[i].room){
 						console.log("adding "+hashstuff[j].name+" to "+disconnect[i].room);
-						disconnect[i].push(hashstuff.name);
-
+						disconnect[i].names.push(hashstuff.name);
+						done = true;
 					}
-					else{
-						var socketId = {
-							room: disconnect[i].room,
-							names: [hashstuff.name],
-						}
-					}
-					hashstuff.splice(j,0);
 				}
+				if(done===false){
+					console.log("popping new on");
+					var socketId = {
+						room: hashstuff[j].room,
+						names: [hashstuff.name],
+					}
+					disconnect.push(socketId);
+				}
+
+				hashstuff.splice(j,0);
 			}
 		}
 
     });
+	function checkIfDisc(roomCode, username){
+		console.log("here");
+		for(var u = 0; u < disconnect.length; ++u){
+			if(disconnect[u].room===roomCode){
+				console.log("here");
+				for(var j = 0; j < disconnect[u].names.length; ++j){
+					if(username===disconnect[u].names[j]) {
+						disconnect[u].names.splice(j,0);
+						console.log("did real shit");
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	};
+	function checkIfExists(roomCode, username){
 
+		//todo move this to new function so shit can happen
+			//console.log(hashstuff);
+			for(var i = 0; i < hashstuff.length;++i){
+
+				if(username===hashstuff[i].name&&roomCode===hashstuff[i].room){
+					console.log("found something");
+					return false;
+				}
+			}
+		return true;
+	};
 	socket.on('join', function(roomCode, username) {
 		console.log(socket.id);
-		console.log(disconnect);
-		var disc = false;
-		var check = function checkIfExists(){
-			for(var j = 0; j < disconnect.length; ++i){
-				if(username===disconnect[i]) {
-					disconnect.splice(i,0);
-					disc = true;
-				}
-			}
-			for(var i = 0; i < hashstuff.length;++i){
-				if(username===hashstuff[i]){
-					return true;
-				}
-			}
-			return false;
-		};
+		var disc = checkIfDisc(roomCode,username);
+		var check = checkIfExists(roomCode,username);
 		if(disc){
 			console.log("reconnecting a user: "+ username);
 			socket.join(roomCode);
@@ -87,7 +105,7 @@ io.on('connection', function(socket) {
 				id: socket.id
 			}
 			hashstuff.push(socketId);
-
+			socket.emit('successJoin');
 		}
 		else if(check){
 
@@ -117,7 +135,7 @@ io.on('connection', function(socket) {
 				addUserToRoom(roomCode,username);//calls function that adds to room
 				var host = false;
 				io.to(roomCode).emit('newUser', username, host);
-
+				socket.emit('successJoin');
 			// //Add the room to activeRooms
 			 //console.log(user);
 			 //var users = [user];
@@ -139,11 +157,17 @@ io.on('connection', function(socket) {
 			// }
 			// console.log(activeRooms);
 		}}
+		else{
+			socket.emit('failedToCreate');
+
+		}
+
 	});
 	socket.on('getUsers', function(roomCode, username) {
 		var room = findRoom(roomCode);
 		//console.log(room.users);
 		var names = [];
+		console.log(room);
 		for(var u = 0; u < room.users.length; u++) {
 			var thisName = room.users[u].name;
 			//console.log(thisName);
@@ -160,14 +184,13 @@ io.on('connection', function(socket) {
 		socket.join(roomCode);
 		console.log(username + ' has connected to room: ' + roomCode);
 		var socketId = {
-			room: roomCode,
-			sockets: {
+				room: roomCode,
 				name: username,
 				id: socket.id
-			}
 		}
 		hashstuff.push(socketId);
 		//Declare this user
+		hostID = socket;
 		var user = {
 			name: username,
 			alive: true,
@@ -196,6 +219,11 @@ io.on('connection', function(socket) {
 		// console.log(room);
 		room.started = true;
 		io.to(roomCode).emit('gameStarted');
+		//console.log(hostID+" is host id");
+		if(hostID!==0){
+		hostID.emit('onCreate', 'for your eyes only');
+		}
+
 	});
 });
 
@@ -239,10 +267,12 @@ function createRoomCode() {
 }
 
 function findRoom(code) {
+	console.log("code: "+code)
 	for(var i = 0; i < activeRooms.length; i++) {
 		//console.log(i + ": " + activeRooms[i]);
 		var roomCode = activeRooms[i].roomCode;
 		if(roomCode === code) {
+			console.log('here '+activeRooms[i]);
 			return activeRooms[i];
 		}
 	}
