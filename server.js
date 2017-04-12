@@ -60,7 +60,7 @@ io.on('connection', function(socket) {
 					console.log("popping new on");
 					var socketId = {
 						room: hashstuff[j].room,
-						names: [hashstuff.name],
+						names: [hashstuff[j].name],
 					}
 					disconnect.push(socketId);
 				}
@@ -75,8 +75,9 @@ io.on('connection', function(socket) {
 		console.log("here");
 		for(var u = 0; u < disconnect.length; ++u){
 			if(disconnect[u].room===roomCode){
-				console.log("here");
+				console.log("here at disconnect");
 				for(var j = 0; j < disconnect[u].names.length; ++j){
+					console.log("name "+disconnect[u].names[j]);
 					if(username===disconnect[u].names[j]) {
 						disconnect[u].names.splice(j,0);
 						console.log("did real shit");
@@ -116,18 +117,16 @@ io.on('connection', function(socket) {
 			socket.emit('successJoin');
 		}
 		else if(check){
-
+		var room = findRoom(roomCode);
+	    if(!room) {
+			console.log("Room " + roomCode + " doesn't exist.");
+		} else {//if you found a legit room, it lets you join
 			var socketId = {
 				room: roomCode,
 				name: username,
 				id: socket.id
 			}
-		hashstuff.push(socketId);
-
-		var room = findRoom(roomCode);
-	    if(!room) {
-			console.log("Room " + roomCode + " doesn't exist.");
-		} else {//if you found a legit room, it lets you join
+			hashstuff.push(socketId);
 			//TODO shouldnt join an already started room unless you are in it
 				socket.join(roomCode);
 				addUserToRoom(roomCode,username);//calls function that adds to room
