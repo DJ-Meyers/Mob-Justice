@@ -167,18 +167,18 @@ block content
             socket.emit('join', roomCode, name);
 
             //TODO convert this to sockets
-            var getURL = 'http://192.168.1.3:3000/currentUsers/' + roomCode;
+            /*var getURL = 'http://192.168.1.21:3000/currentUsers/' + roomCode;
             console.log(getURL);
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.open("GET", getURL, false);
             xmlHttp.send();
             var currentUsers = JSON.parse(xmlHttp.responseText);
-            console.log(currentUsers);
-
-            for(var u = 0; u < currentUsers.length; u++) {
-                //only adds people that arent you, since when you join it adds you
-                if(name!==currentUsers[u])	addUserToWaitPlayerList(currentUsers[u]);
-            }
+            console.log(currentUsers);*/
+            socket.emit('getUsers',roomCode,name);
+            //for(var u = 0; u < currentUsers.length; u++) {
+            //only adds people that arent you, since when you join it adds you
+            //if(name!==currentUsers[u])	addUserToWaitPlayerList(currentUsers[u]);
+            //}
 
 
             roomCodeHeader.text(roomCode);
@@ -191,9 +191,17 @@ block content
             $('#startButtonDiv').append(startButton);
         });
 
-        socket.on('newUser', function(username) {
-            //when people join
-            addUserToWaitPlayerList(username);
+        socket.on('newUser', function(username, host) {
+            if(host===true || name!==username){
+                addUserToWaitPlayerList(username);}
+        });
+
+        socket.on('usersList', function( names, username ){
+            if(username===name){
+                for(var i = 0;i<names.length;++i){
+                    addUserToWaitPlayerList(names[i]);
+                }
+            }
         });
 
         socket.on('gameStarted', function() {

@@ -35,7 +35,11 @@ server.listen(conf.PORT, conf.HOST, () => {
 
 io.on('connection', function(socket) {
 	//TODO join
+	socket.on('disconnect', function () {
+        console.log(socket.id);
+    });
 	socket.on('join', function(roomCode, username) {
+		console.log(socket.id);
 		/*
 			Below is the old logic that was used when everything used join.  Use simple logic like
 			checking if the roomCode is in activeRooms[].  If it is, do socket.join(roomCode), and
@@ -54,7 +58,8 @@ io.on('connection', function(socket) {
 			//TODO shouldnt join an already started room unless you are in it
 				socket.join(roomCode);
 				addUserToRoom(roomCode,username);//calls function that adds to room
-				io.to(roomCode).emit('newUser', username);
+				var host = false;
+				io.to(roomCode).emit('newUser', username, host);
 
 			// //Add the room to activeRooms
 			 //console.log(user);
@@ -77,6 +82,19 @@ io.on('connection', function(socket) {
 			// }
 			// console.log(activeRooms);
 		}
+	});
+	socket.on('getUsers', function(roomCode, username) {
+		var room = findRoom(roomCode);
+		//console.log(room.users);
+		var names = [];
+		for(var u = 0; u < room.users.length; u++) {
+			var thisName = room.users[u].name;
+			//console.log(thisName);
+			names.push(thisName);
+			//console.log(thisName);
+		}
+		io.to(roomCode).emit('usersList', names, username);
+
 	});
 
 	socket.on('create', function(roomCode, username) {
@@ -103,7 +121,8 @@ io.on('connection', function(socket) {
 		activeRooms.push(room);
 
 		//Send the newUser message to clients that are listening on roomCode
-		io.to(roomCode).emit('newUser', username);
+		var host = true;
+		io.to(roomCode).emit('newUser', username, host);
 
 	});
 
