@@ -61,7 +61,7 @@ html {
 
 a.navbar-brand {
     text-align: center;
-    font-size: 4vh;
+    font-size: 2rem;
 }
 a, a:hover {
     color: inherit !important;
