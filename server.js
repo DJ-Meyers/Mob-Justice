@@ -45,12 +45,15 @@ io.on('connection', function(socket) {
 		*/
 
 		// socket.join(roomCode);
+		//lets you know whose joining
 		console.log(username + ' has tried to connect to room: ' + roomCode);
 		var room = findRoom(roomCode);
 	    if(!room) console.log("wrong");
-		else {
+		else {//if you found a legit room, it lets you join
+			//TODO shouldnt join an already started room unless you are in it
 				socket.join(roomCode);
-				addUserToRoom(roomCode,username);
+				addUserToRoom(roomCode,username);//calls function that adds to room
+				io.to(roomCode).emit('newUser', username);
 
 			// //Add the room to activeRooms
 			 //console.log(user);
@@ -162,6 +165,7 @@ function findRoom(code) {
 	console.log("could not find room");
 }
 function addUserToRoom(code, username) {
+	//goes through, finds room, makes a user, and adds it to room's userlist
 	for(var i = 0; i < activeRooms.length; i++) {
 		if(activeRooms[i].roomCode === code) {
 			var user = {

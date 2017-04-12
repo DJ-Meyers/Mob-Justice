@@ -112,7 +112,7 @@ block content
             joinDiv.removeClass('hidden').addClass('vertical-center');
             landing.addClass('hidden').removeClass('vertical-center');
         });
-
+        //this does nothing, trying to make toggle work
         /*$(function () {
         //shit just doesnt work, i have no idea why
         $('#accordion').on('show.bs.collapse', function () {
@@ -144,6 +144,7 @@ block content
                 //- xmlHttp.send();
 
                 socket.emit('startGame', roomCode);
+                //added this part so that it goes to the next "page" which is the day waiting room
                 waitingRoom.removeClass('vertical-center').addClass('hidden');
                 dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
 
@@ -161,6 +162,7 @@ block content
             waitingRoom.addClass('vertical-center').removeClass('hidden');
 
             //TODO URL
+            //moved this part up here so it joins you to room before printing out people in room
             console.log(name + " attempting to join " + roomCode);
             socket.emit('join', roomCode, name);
 
@@ -173,7 +175,8 @@ block content
             console.log(currentUsers);
 
             for(var u = 0; u < currentUsers.length; u++) {
-                addUserToWaitPlayerList(currentUsers[u]);
+                //only adds people that arent you, since when you join it adds you
+                if(name!==currentUsers[u])	addUserToWaitPlayerList(currentUsers[u]);
             }
 
 
@@ -188,11 +191,16 @@ block content
         });
 
         socket.on('newUser', function(username) {
+            //when people join
             addUserToWaitPlayerList(username);
         });
 
         socket.on('gameStarted', function() {
             console.log('Game starting');
+            //this pulls everyone into the day room when game starts
+            waitingRoom.removeClass('vertical-center').addClass('hidden');
+            dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
+
         }); 
 
         joinVoting.click(function() {
@@ -236,6 +244,7 @@ block content
         });
 
         function addUserToWaitPlayerList(username) {
+            console.log("this is called");
             var thisPlayer = document.createElement('li');
             thisPlayer.classList.add('list-group-item','justify-content-between');
 
