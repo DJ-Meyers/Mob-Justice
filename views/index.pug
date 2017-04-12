@@ -163,7 +163,7 @@ block content
             //moved this part up here so it joins you to room before printing out people in room
             console.log(name + " attempting to join " + roomCode);
             socket.emit('join', roomCode, name);
-
+            socket.emit('getUsers',roomCode,name)
             roomCodeHeader.text(roomCode);
 
             var startButton = document.createElement('button');
@@ -175,6 +175,7 @@ block content
         });
 
         socket.on('newUser', function(username, host) {
+            console.log(name+" and username: "+username);
             if(host===true || name!==username){
                 addUserToWaitPlayerList(username);}
         });
@@ -192,7 +193,7 @@ block content
             //this pulls everyone into the day room when game starts
             waitingRoom.removeClass('long-content').addClass('hidden');
             dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
-                        
+
         }); 
 
         joinVoting.click(function() {

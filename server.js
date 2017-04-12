@@ -16,7 +16,8 @@ var path      = require('path');
 var conf      = require(path.join(__dirname, 'config'));
 
 var activeRooms = [];
-
+var hashstuff = [];//name room id
+var disconnect = [];// {roomID, [name]}
 
 // Helper functions
 
@@ -37,9 +38,65 @@ io.on('connection', function(socket) {
 	//TODO join
 	socket.on('disconnect', function () {
         console.log(socket.id);
+		for(var j = 0; j<hashstuff.length; ++j){
+			if(socket.id===hashstuff[j].id){
+				console.log('name : '+ hashstuff[j].name+" from room" + hashstuff[j].room);
+				for(var i = 0; i<disconnect.length;++i){
+					if(hashstuff[j].room===disconnect[i].room){
+						console.log("adding "+hashstuff[j].name+" to "+disconnect[i].room);
+						disconnect[i].push(hashstuff.name);
+
+					}
+					else{
+						var socketId = {
+							room: disconnect[i].room,
+							names: [hashstuff.name],
+						}
+					}
+					hashstuff.splice(j,0);
+				}
+			}
+		}
+
     });
+
 	socket.on('join', function(roomCode, username) {
 		console.log(socket.id);
+		console.log(disconnect);
+		var disc = false;
+		var check = function checkIfExists(){
+			for(var j = 0; j < disconnect.length; ++i){
+				if(username===disconnect[i]) {
+					disconnect.splice(i,0);
+					disc = true;
+				}
+			}
+			for(var i = 0; i < hashstuff.length;++i){
+				if(username===hashstuff[i]){
+					return true;
+				}
+			}
+			return false;
+		};
+		if(disc){
+			console.log("reconnecting a user: "+ username);
+			socket.join(roomCode);
+			var socketId = {
+				room: roomCode,
+				name: username,
+				id: socket.id
+			}
+			hashstuff.push(socketId);
+
+		}
+		else if(check){
+
+			var socketId = {
+				room: roomCode,
+				name: username,
+				id: socket.id
+			}
+		hashstuff.push(socketId);
 		/*
 			Below is the old logic that was used when everything used join.  Use simple logic like
 			checking if the roomCode is in activeRooms[].  If it is, do socket.join(roomCode), and
@@ -81,7 +138,7 @@ io.on('connection', function(socket) {
 			// 	}
 			// }
 			// console.log(activeRooms);
-		}
+		}}
 	});
 	socket.on('getUsers', function(roomCode, username) {
 		var room = findRoom(roomCode);
@@ -102,7 +159,14 @@ io.on('connection', function(socket) {
 		//Connect to the room (Creates a new room, assuming a room with this code doesn't exist.  That should VERY rarely happen.  1/26^4)
 		socket.join(roomCode);
 		console.log(username + ' has connected to room: ' + roomCode);
-
+		var socketId = {
+			room: roomCode,
+			sockets: {
+				name: username,
+				id: socket.id
+			}
+		}
+		hashstuff.push(socketId);
 		//Declare this user
 		var user = {
 			name: username,
