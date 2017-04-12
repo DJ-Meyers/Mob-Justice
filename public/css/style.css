@@ -11,8 +11,12 @@ html {
     width: 100%;
 }
 
-.roomCodeTitle {
+#roomCodeTitle {
     text-align: center;
+}
+
+#instruction {
+    font-size: 1rem;
 }
 
 #submit {

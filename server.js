@@ -21,6 +21,9 @@ var disconnect = [];// {roomID, [name]}
 var hostID = 0;
 // Helper functions
 
+//----------------------------------------------------
+// Initialize App
+//----------------------------------------------------
 app.set('view engine', 'pug'); // Set express to use pug for rendering HTML
 
 // Setup the 'public' folder to be statically accessable
@@ -34,8 +37,12 @@ server.listen(conf.PORT, conf.HOST, () => {
 	console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
 });
 
+//----------------------------------------------------
+// Socket stuff
+//----------------------------------------------------
 io.on('connection', function(socket) {
 	//TODO join
+	//TODO add descriptive comment
 	socket.on('disconnect', function () {
         console.log(socket.id);
 		for(var j = 0; j<hashstuff.length; ++j){
@@ -63,6 +70,7 @@ io.on('connection', function(socket) {
 		}
 
     });
+//TODO add descriptive stuff
 	function checkIfDisc(roomCode, username){
 		console.log("here");
 		for(var u = 0; u < disconnect.length; ++u){
@@ -115,17 +123,7 @@ io.on('connection', function(socket) {
 				id: socket.id
 			}
 		hashstuff.push(socketId);
-		/*
-			Below is the old logic that was used when everything used join.  Use simple logic like
-			checking if the roomCode is in activeRooms[].  If it is, do socket.join(roomCode), and
-			add the user onto the list of users for that room.  Otherwise, console.log that
-			<username> tried to access a room that doesn't exist.  This way, users won't
-			accidentally create new rooms when entering the wrong room code.
-		*/
 
-		// socket.join(roomCode);
-		//lets you know whose joining
-		console.log(username + ' has tried to connect to room ' + roomCode);
 		var room = findRoom(roomCode);
 	    if(!room) {
 			console.log("Room " + roomCode + " doesn't exist.");
@@ -156,6 +154,7 @@ io.on('connection', function(socket) {
 			// 	}
 			// }
 			// console.log(activeRooms);
+				console.log(username + ' has connected to ' + roomCode);
 		}}
 		else{
 			socket.emit('failedToCreate');
@@ -163,21 +162,21 @@ io.on('connection', function(socket) {
 		}
 
 	});
+
+	//Get users currently in the room
 	socket.on('getUsers', function(roomCode, username) {
+		//TODO prevent this from breaking when a user enters an invalid room code
 		var room = findRoom(roomCode);
-		//console.log(room.users);
 		var names = [];
 		console.log(room);
 		for(var u = 0; u < room.users.length; u++) {
 			var thisName = room.users[u].name;
-			//console.log(thisName);
 			names.push(thisName);
-			//console.log(thisName);
 		}
 		io.to(roomCode).emit('usersList', names, username);
-
 	});
 
+	//Create a new room
 	socket.on('create', function(roomCode, username) {
 
 		//Connect to the room (Creates a new room, assuming a room with this code doesn't exist.  That should VERY rarely happen.  1/26^4)
@@ -203,7 +202,8 @@ io.on('connection', function(socket) {
 		var room = {
 			roomCode: roomCode,
 			users: users,
-			started: false
+			started: false,
+			votes: []
 		};
 		activeRooms.push(room);
 
@@ -213,59 +213,50 @@ io.on('connection', function(socket) {
 
 	});
 
+	//Start a game
 	socket.on('startGame', function(roomCode) {
-		console.log('Starting Game: ' + roomCode);
+		// console.log('Starting Game: ' + roomCode);
 		var room = findRoom(roomCode);
 		// console.log(room);
 		room.started = true;
-		io.to(roomCode).emit('gameStarted');
-		//console.log(hostID+" is host id");
+		assignRoles(room);
+		printRemaining(room);
+
+		io.to(roomCode).emit('gameStarted', getUserStatuses(room));
+		console.log('Started game ' + roomCode + " successfully");
 		if(hostID!==0){
 		hostID.emit('onCreate', 'for your eyes only');
 		}
-
 	});
+
+	//Handle Voting logic for the day
+	socket.on('voteDay', function(roomCode, name, target) {
+		console.log(name + " voted for " + target);
+		var room = findRoom(roomCode);
+		room.votes.push(target);
+		if(room.votes.length === room.totalRemaining) {
+			var votedOut = tallyVotes(room);
+			if(votedOut) {
+				console.log(votedOut + ' was voted out');
+				voteOut(room, votedOut);
+				//Socket.to(roomCode).emit('eliminate', votedOut);
+			} else {
+				console.log('Nobody was voted out');
+				//Socket.to(roomCode).emit('noElimination')
+			}
+		} else {
+			console.log(room.votes.length + ' voted');
+		}
+	});
+
+
+
 });
 
-// Setup the paths (Insert any other needed paths here)
-// ------------------------------------------------------------------------
-// Home page
-app.get('/', (req, res) => {
-	res.render('index', {title: 'Mob Justice'});
-});
 
-app.get('/currentUsers/:roomCode', (req, res) => {
-	console.log("recieved a request with room code"+ req.params.roomCode);
-	var room = findRoom(req.params.roomCode);
-	console.log(room.users);
-	var names = [];
-	for(var u = 0; u < room.users.length; u++) {
-		var thisName = room.users[u].name;
-		//console.log(thisName);
-		names.push(thisName);
-		console.log(thisName);
-	}
-	// console.log(names);
-	res.send(JSON.stringify(names));
-});
-
-app.post('/startGame/:roomCode', (req, res) => {
-	var room = findRoom(req.params.roomCode);
-	room.started = true;
-	console.log('Starting Game: ' + req.params.roomCode);
-	io.to(req.params.roomCode).emit('gameStarted');
-})
-
-function createRoomCode() {
-	var code = "";
-	for(var i = 0; i < 4; i++) {
-		var letter = String.fromCharCode(Math.random() * (26) + 65);
-		code += letter;
-	}
-	console.log(code);
-	return code;
-}
-
+//----------------------------------------------------
+// General Helpers
+//----------------------------------------------------
 function findRoom(code) {
 	console.log("code: "+code)
 	for(var i = 0; i < activeRooms.length; i++) {
@@ -279,6 +270,11 @@ function findRoom(code) {
 	//return false;
 	console.log("could not find room");
 }
+
+
+//----------------------------------------------------
+// Initialization helpers
+//----------------------------------------------------
 function addUserToRoom(code, username) {
 	//goes through, finds room, makes a user, and adds it to room's userlist
 	for(var i = 0; i < activeRooms.length; i++) {
@@ -293,84 +289,177 @@ function addUserToRoom(code, username) {
 	}
 }
 
+function assignRoles(room) {
+	//<=7 players  -> 2 mafia
+	//<=10 players -> 3 mafia
+	//<=13 players -> 4 mafia
+	//<=16 players -> 5 mafia
 
-//Not needed
+	var numPlayers = room.users.length;
+	var numMafia = 0, numDoc = 1, numDet = 1;
 
-
-app.get('/join', (req, res) => {
-	res.render('join', {title: 'Mob Justice - Join'});
-});
-
-app.get('/play', (req, res) => {
-	res.render('play', {title: 'Mob Justice - Play'});
-});
-
-app.get('/create', (req, res) => {
-	res.render('create', {title: 'Mob Justice - Create'});
-});
-
-app.get('/about', (req, res) => {
-	res.render('about', {title: 'Mob Justice - About'});
-});
-
-app.get('/creators', (req, res) => {
-	res.render('creators', {title: 'Mob Justice - Creators'});
-});
-
-
-// Post Request to create new room
-app.post('/newGame', urlencodedParser, (req, res) => {
-	//Initialize doctor and detective to off
-	var doctor = 'off', detective = 'off';
-	var users = [];
-
-	//If they're included in the form submission, set them to on.
-	if(req.body.doctor) {
-		doctor = 'on';
-	}
-	if(req.body.detective) {
-		detective = 'on';
+	if(numPlayers <= 7) {
+		numMafia = 2;
+	} else if (numPlayers <= 10) {
+		numMafia = 3;
+	} else if (numPlayers <= 13 ) {
+		numMafia = 4;
+	} else if (numPlayers <= 16) {
+		numMafia = 5;
 	}
 
-	var user = {
-		name:req.body.name,
-		role:"citizen"
+	room.totalRemaining = numPlayers;
+	room.mafiaRemaining = numMafia;
+	room.citizensRemaining = numPlayers - numMafia;
+	room.doctorRemaining = 1;
+	room.detectiveRemaining = 1;
+
+	var index;
+	while(numMafia !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "mafia";
+			numMafia--;
+		}
+	}
+
+	while(numDoc !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "doctor";
+			numDoc--;
+		}
+	}
+
+	while(numDet !== 0) {
+		index = Math.floor(Math.random() * numPlayers);
+		if(room.users[index].role == "citizen") {
+			room.users[index].role = "detective";
+			numDet--;
+		}
+	}
+
+	for(var i = 0; i < room.users.length; i++) {
+		console.log(room.users[i].name + ": " + room.users[i].role);
+	}
+}
+
+
+//----------------------------------------------------
+// Game Logic Helpers
+//----------------------------------------------------
+
+//Print remaining # of each type of player
+function printRemaining(room) {
+	console.log('Total: ' + room.totalRemaining);
+	console.log('Mafia: ' + room.mafiaRemaining);
+	console.log('Citizens: ' + room.citizensRemaining);
+	console.log('Doctor: ' + room.doctorRemaining);
+	console.log('Detective: ' + room.detectiveRemaining);
+}
+
+//Get alive/dead status of each user
+function getUserStatuses (room) {
+	var userStatuses = [];
+	for(var i = 0; i < room.users.length; i++) {
+		userStatuses.push({
+			name: room.users[i].name,
+			alive: room.users[i].alive
+		});
+	}
+
+	return userStatuses;
+}
+
+//Count the number of votes for each user
+function tallyVotes(room) {
+	var usersVotedFor = [];
+	for(var i = 0; i < room.votes.length; i++) {
+		// if(usersVotedFor.length === 0) {
+		// 	usersVotedFor.push({
+		// 		name: room.votes[i],
+		// 		num: 1
+		// 	});
+		// } else {
+		var found = false;
+		for(var j = 0; j < usersVotedFor.length; j++) {
+			if(room.votes[i] === usersVotedFor[j].name) {
+				usersVotedFor[j].num++;
+				found = true;
+				break;
+			}
+		}
+		if(!found) {
+			usersVotedFor.push({
+				name: room.votes[i],
+				num: 1
+			});
+		}
+		// }
+	}
+	console.log(usersVotedFor);
+	return getMajority(usersVotedFor, room.votes.length);
+}
+
+//Determine if there is a majority in the voting
+function getMajority(usersVotedFor, totalVotes) {
+	var maxVotes = 0, maxTarget = "";
+	for(var i = 0; i < usersVotedFor.length; i++) {
+		if(usersVotedFor[i].num > maxVotes) {
+			maxVotes = usersVotedFor[i].num;
+			maxTarget = usersVotedFor[i].name;
+		}
+	}
+	console.log(maxTarget + ": " + maxVotes);
+	if(maxVotes >= totalVotes / 2) {
+		return maxTarget;
+	} else {
+		return null;
+	}
+}
+
+//Vote out a user by setting alive to false and adjusting the remaining counts
+function voteOut(room, votedOut) {
+	for (var i = 0; i < room.users.length; i++) {
+		if(room.users[i].name === votedOut) {
+			console.log('eliminating ' + votedOut);
+			room.users[i].alive = false;
+			eliminate(room, room.users[i]);
+		}
+	}
+	printRemaining(room);
+}
+
+//Adjust remaining count of players of each type
+function eliminate(room, user) {
+	room.totalRemaining--;
+	switch(user.role) {
+		case "citizen":
+			room.citizensRemaining--;
+			break;
+		case "mafia":
+			room.mafiaRemaining--;
+			break;
+		case "doctor":
+			room.doctorRemaining--;
+			room.citizensRemaining--;
+			break;
+		case "detective":
+			room.detectiveRemaining--;
+			room.citizensRemaining--;
+		default:
+			break;
 	};
 
-	//users.push(user);
+}
 
-	var newGame = {
-		roomCode:createRoomCode(),
-		doctor:doctor,
-		detective:detective,
-		users: [user]
-	};
+//----------------------------------------------------
+// Routing
+//----------------------------------------------------
 
-	activeGames.push(newGame);
-	console.log(user.name + " created: " + newGame);
-	console.log(activeGames);
-
-
-	// Connect to the room.
-
-res.end(JSON.stringify(newGame));
-});
-
-// Post Request to create new room
-app.post('/joinGame', urlencodedParser, (req, res) => {
-	//Find room with given code
-	var room = findRoom(req.body.roomCode);
-
-	//Add user to that room
-	var user = {
-		name:req.body.name,
-		role:"citizen"
-	};
-
-	room.users.push(user);
-	console.log(room);
-
-	res.end(JSON.stringify(user));
+//Home/Game page
+app.get('/', (req, res) => {
+	res.render('index', {title: 'Mob Justice'});
 });
 
 // Basic 404 Page
@@ -399,14 +488,3 @@ process.on('SIGINT', () => {
 	internals.stop();
 	process.kill(process.pid);
 });
-
-
-function setupSocket() {
-	var server = require('http').createServer(app);
-	var io = socket(server);
-
-	server.listen(conf.PORT, conf.HOST, () => {
-		console.log("Server listening on: " + conf.HOST + ":" + conf.PORT);
-	});
-
-}
