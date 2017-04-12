@@ -41,7 +41,7 @@ block content
                 button.btn.btn-primary.btn-block.btn-main#joinSubmit Join Game
 
     div#waitingRoom.hidden
-        div.card.middle-align.mid 
+        div.card
             div.card-block
                 h4.card-title.alert.alert-info.align-middle(role="alert")
                     strong Room Code: 
@@ -125,7 +125,7 @@ block content
             name = createName.val();
 
             createDiv.removeClass('vertical-center').addClass('hidden');
-            waitingRoom.addClass('vertical-center').removeClass('hidden');
+            waitingRoom.addClass('long-content').removeClass('hidden');
 
             console.log(name + " attempting to join " + roomCode);
             socket.emit('create', roomCode, name);
@@ -159,7 +159,7 @@ block content
             name = joinName.val();
 
             joinDiv.removeClass('vertical-center').addClass('hidden');
-            waitingRoom.addClass('vertical-center').removeClass('hidden');
+            waitingRoom.addClass('long-content').removeClass('hidden');
 
             //TODO URL
             //moved this part up here so it joins you to room before printing out people in room

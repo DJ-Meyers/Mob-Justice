@@ -6,8 +6,9 @@ html {
 }
 
 .long-content {
-    margin-top: 68px;
-    position: absolute;
+    padding-top: 68px;
+    position: relative;
+    width: 100%;
 }
 
 #submit {
