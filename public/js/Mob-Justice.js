@@ -179,45 +179,21 @@ socket.on('settingUpRevoting', function(userStatuses){
     console.log('trying to revote');
     phase.text(' - Day: Revote');
     instruction.text("The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.");
+
     resetVoting(userStatuses);
-    //For each user, disable the their list group item if they're dead
-    // $('.list-group-item').each(function() {
-    //     if(!isAlive($(this).text(), userStatuses)) {
-    //         $(this).addClass('disabled');
-    //         $(this).off('click');
-    //     }
-    //     else{
-    //         $(this).removeClass('disabled');
-    //         //$(this).off('click');
-    //     }
-    // });
-    //
-    // //If this person is alive, allow them to vote
-    // if(isAlive(name, userStatuses)) {
-    //     voteButton.prop('disabled', false);
-    //     //Prevent users from voting more than once.
-    //     voteButton.on('click', function() {
-    //         if(target) {
-    //             console.log('Voting for ' + target);
-    //             $('.active').removeClass('active');
-    //             $('.list-group-item').addClass('disabled');
-    //
-    //             $('.list-group-item').off('click');
-    //
-    //             instruction.text('Your vote has been submitted.  Waiting on others.');
-    //
-    //             socket.emit('voteDay', roomCode, name, target);
-    //             voteButton.addClass('disabled');
-    //             voteButton.prop('disabled', true);
-    //         } else {
-    //             console.log('Cannot vote for nobody.');
-    //         }
-    //     });
-    // }
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.text('Vote');
+    disable(voteButton);
+    voteButton.one('click', function() {
+        socket.emit('voteDay', roomCode, name, target);
+        disable(voteButton);
+        instruction.html("<p>Your vote has been submitted.  Please wait while the other players submit their votes.</p>");
+    });
 });
 socket.on('userStatuses', function(userStatuses) {
     console.log(userStatuses);
-    resetVoting(userStatuses, name);
+    resetVoting(userStatuses);
 });
 socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
     console.log(votedOut + " has been voted out.");
@@ -328,14 +304,15 @@ function createRoomCode() {
     return code;
 }
 
-function resetVoting(userStatuses, name) {
+function resetVoting(userStatuses) {
     disableDead(userStatuses);
-    disableMe(name);
+    disableMe();
 }
 
 function disableDead(userStatuses) {
     console.log($('.list-group-item'));
     $('.list-group-item').each(function() {
+        $(this).removeClass('active');
         if(isAlive($(this).text(), userStatuses)) {
             console.log('enabling: ' + $(this));
             enable($(this));
@@ -346,7 +323,7 @@ function disableDead(userStatuses) {
     });
 }
 
-function disableMe(name) {
+function disableMe() {
     disable(findNameInJQueryList(name));
 }
 
@@ -452,8 +429,10 @@ function beginDay() {
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.text('Vote');
     disable(voteButton);
-    voteButton.click(function() {
+    voteButton.one('click', function() {
         socket.emit('voteDay', roomCode, name, target);
+        disable(voteButton);
+        instruction.html("<p>Your vote has been submitted.  Please wait while the other players submit their votes.</p>");
     });
 
     //Add the on click function for all users in the list group to select and target them
