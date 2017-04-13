@@ -30,7 +30,7 @@ var gameRoom			=	$('#gameRoom');
     var voteButton      =   $('#voteButton');
 
 //Variables used to enact game Logic
-var roomCode = "", name = "", target = " ";
+var roomCode = "", name = "", target = " ",connected = false;
 
 
 //----------------------------------------------------
@@ -71,7 +71,7 @@ createSubmit.click(function() {
 
 joinSubmit.click(function() {
     //moved this part up here so it joins you to room before printing out people in room
-    name = joinName.val();
+    name = joinName.val();//TODO decide if should set name here
     console.log(name + " attempting to join " + joinCode.val().toUpperCase());
     socket.emit('join', joinCode.val().toUpperCase(), joinName.val());
 });
@@ -108,11 +108,20 @@ socket.on('usersList', function( names, username ){
     }
 });
 
+//after a client disconnects (usually a phone), it will try to rejoin
+socket.on( 'disconnect', function () {
+    connected = false;
+    //try to connect back
+    console.log( 'disconnected to server' );
+
+} );
+
 socket.on('onCreate', function(msg) {
     console.log("'onCreate', " + msg);
 });
 
 socket.on('successJoin', function(username, host) {
+    connected = true;
     console.log("'successJoin', " + username + ", " + host);
 
     roomCode = joinCode.val().toUpperCase();
@@ -197,7 +206,19 @@ function isAlive(name, userStatuses) {
     }
     return false;
 }
+//----------------------------------------------------
+// Reconnect Logic
+//----------------------------------------------------
 
+
+function reconnect(roomcode, username) {
+    if(connected===false){
+        //tell socket that you are trying to reconnect
+        if(connected===false){
+            setTimeout(reconnect, 5000);
+        }
+    }
+}
 
 //----------------------------------------------------
 // Game Logic

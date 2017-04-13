@@ -338,6 +338,18 @@ function assignRoles(room) {
 // Game Logic Helpers
 //----------------------------------------------------
 
+//checks if Mafia won
+function checkMafiaWinCondition(roomCode) {
+	var room = findRoom(roomCode);
+	if(room.mafiaRemaining>room.citizensRemaining)return true;
+	else false;
+}
+//check if Citizens won
+function checkCitizenWinCondition(roomCode) {
+	var room = findRoom(roomCode);
+	if(room.mafiaRemaining===0)return true;
+	else false;
+}
 //Print remaining # of each type of player
 function printRemaining(room) {
 	console.log('\n' + room.roomCode + ': Remaining');
@@ -383,6 +395,7 @@ function tallyVotes(room) {
 		if(!found) {
 			usersVotedFor.push({
 				name: room.votes[i],
+				role: room.users[i].role,
 				num: 1
 			});
 		}
@@ -402,6 +415,11 @@ function getMajority(usersVotedFor, totalVotes) {
 	var maxVotes = 0, maxTarget = "";
 	for(var i = 0; i < usersVotedFor.length; i++) {
 		if(usersVotedFor[i].num > maxVotes) {
+			maxVotes = usersVotedFor[i].num;
+			maxTarget = usersVotedFor[i].name;
+		}
+		else if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role==='mafia'){
+			console.log("edge case where even and now mafia: "+usersVotedFor[i].name+" is going to be hung");
 			maxVotes = usersVotedFor[i].num;
 			maxTarget = usersVotedFor[i].name;
 		}
@@ -484,3 +502,6 @@ process.on('SIGINT', () => {
 	internals.stop();
 	process.kill(process.pid);
 });
+//------------------------------------------------------------------------
+//spencers stuff
+//------------------------------------------------------------------------
