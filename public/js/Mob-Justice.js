@@ -30,7 +30,8 @@ var gameRoom			=	$('#gameRoom');
     var voteButton      =   $('#voteButton');
 
 //Variables used to enact game Logic
-var roomCode = "", name = "", target = "",connected = false, eliminatedRole="";
+var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1;
+
 
 
 //----------------------------------------------------
@@ -206,15 +207,22 @@ socket.on('userStatuses', function(userStatuses) {
     }
 });
 
-socket.on('eliminated', function(votedOut) {
+socket.on('movingOn', function(votedOut) {
     console.log(votedOut + " has been voted out.");
 
+    //TODO spencer - send to next day
     //Day is over.  Begin Evening
     beginEvening(votedOut);
 });
 
-socket.on('noElimination', function() {
-    console.log('No elimination.  Revote');
+socket.on('revoting', function() {
+        console.log('No elimination.  Revote');
+        //revoteDay();
+});
+
+socket.on('gameOver', function(winningTeam, teamMembers) {
+        console.log(winningTeam+' won with players: '+teamMembers);
+
 });
 
 //TODO Spencer replace these by emitting another thing when moving to evening.
@@ -274,6 +282,7 @@ function isAlive(name, userStatuses) {
             return (userStatuses[i].alive);
         }
     }
+
     return false;
 }
 //----------------------------------------------------
@@ -326,6 +335,7 @@ function beginInstructions() {
 
 //Begin Day phase of game
 function beginDay() {
+    votingTime = 1;
     target = "";
     //Replace Phase with Day, change instruction, and change Alert Color
     phase.text(' - Day');
@@ -386,4 +396,7 @@ function beginEvening(votedOut) {
 
     //Change phase to day
     //beginDay();
+}
+function revoteDay() {
+    socket.emit('getUserStatuses', roomCode);
 }

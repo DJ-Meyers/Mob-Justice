@@ -259,6 +259,8 @@ io.on('connection', function(socket) {
 			console.log("      " + room.votes.length + ' out of ' + room.totalRemaining + ' votes submitted');
 		}
 	});
+	socket.on('resetVotes', function(roomCode, name, target) {
+	});
 
 	socket.on('getEliminatedRole', function(roomCode, name) {
 		var room = findRoom(roomCode);
