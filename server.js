@@ -245,8 +245,10 @@ io.on('connection', function(socket) {
 		var room = findRoom(roomCode);
 		console.log("\n" + roomCode + ": " + name + " voted for " + target);
 		room.votes.push(target);
+
 		if(room.votes.length === room.totalRemaining) {
 			console.log("      All votes submitted");
+
 			var votedOut = tallyVotes(room);
 			if(votedOut) {
 				votingTime=1;
@@ -271,7 +273,7 @@ io.on('connection', function(socket) {
 				// console.log("remainingObj: " + remaining);
 				io.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
 			}
-			else if(votingTime>0){
+			else if(votingTime===0){
 					votingTime=1;
 					console.log('Nobody was voted out, not revoting');
 
@@ -297,6 +299,8 @@ io.on('connection', function(socket) {
 				};
 				votingTime--;
 				console.log('Nobody was voted out, revoting');
+				room.votes = [];
+
 				io.to(roomCode).emit('revoting');
 			}
 		}
@@ -305,6 +309,13 @@ io.on('connection', function(socket) {
 		}
 	});
 
+	//this is for when revoting, it deals with server side stuff
+	socket.on('serverRevoting', function(roomCode){
+		var room = findRoom(roomCode);
+		var userStatuses = getUserStatuses(room);
+
+		socket.emit('settingUpRevoting', userStatuses);
+	});
 
 	socket.on('getEliminatedRole', function(roomCode, name) {
 		var room = findRoom(roomCode);
