@@ -19,6 +19,7 @@ var activeRooms = [];
 var hashstuff = [];//name room id
 var disconnect = [];// {roomID, [name]}
 var hostID = 0;
+var votingTime = 1;
 // Helper functions
 
 //----------------------------------------------------
@@ -247,20 +248,42 @@ io.on('connection', function(socket) {
 		if(room.votes.length === room.totalRemaining) {
 			console.log("      All votes submitted");
 			var votedOut = tallyVotes(room);
+			var remaining = {
+				citizens: room.remainingCitizens,
+				mafia: room.remainingMafia,
+				doctor: room.remainingDoctor,
+				detective: room.remainingDetective
+			};
 			if(votedOut) {
+				votingTime=1;
+				var votedRole = '';
 				// console.log(votedOut + ' was voted out');
+				for(var s = 0;s<room.users.length;++s){
+					if(room.users[i].name===votedOut){
+						votedRole = room.users[i].role;
+						console.log('voted out person ('+votedOut+') was a '+votedRole);
+					}
+				}
 				voteOut(room, votedOut);
-				socket.to(roomCode).emit('eliminated', votedOut);
-			} else {
-				console.log('Nobody was voted out');
-				socket.to(roomCode).emit('noElimination');
+				socket.to(roomCode).emit('movingOn', votedOut, votedRole, remaining);
 			}
-		} else {
+			else if(votingTime>0){
+					votingTime=1;
+					console.log('Nobody was voted out, not revoting');
+					socket.to(roomCode).emit('movingOn', null, null, remaining);
+
+			}
+			else{
+				votingTime--;
+				console.log('Nobody was voted out, revoting');
+				socket.to(roomCode).emit('revoting');
+			}
+		}
+		else {
 			console.log("      " + room.votes.length + ' out of ' + room.totalRemaining + ' votes submitted');
 		}
 	});
-	socket.on('resetVotes', function(roomCode, name, target) {
-	});
+
 
 	socket.on('getEliminatedRole', function(roomCode, name) {
 		var room = findRoom(roomCode);
