@@ -176,11 +176,11 @@ block content
         //----------------------------------------------------
 
         //When a new user connects to the room you're in, add them to the playerList
-        socket.on('newUser', function(username, host) {
-            console.log(name+" and username: "+username);
-            if(host===true || name!==username){
+        socket.on('newUser', function(username) {
+            //console.log(name+" and username: "+username);
+            //if(host===true || name!==username){
                 addUserToGamePlayerList(username);
-            }
+            //}
             });
 
         socket.on('failedToCreate', function() {
@@ -202,6 +202,10 @@ block content
         });
         socket.on('onCreate', function(msg) {
             console.log("got pinged "+ msg);
+        });
+        socket.on('removeUser', function(userName) {
+            console.log("server requests "+userName+" from here")
+            removeUserFromGamePlayerList(userName);
         });
         //When the server responds to the request to start the game
         socket.on('gameStarted', function(userStatuses) {
@@ -265,6 +269,11 @@ block content
         //----------------------------------------------------
         // Helper Functions
         //----------------------------------------------------
+
+        function removeUserFromGamePlayerList(username){
+            console.log("trying to remove "+username);
+            $("li:contains('"+username+"')").remove();
+        }
 
         //Add a player to the list and display them in the input group        
         function addUserToGamePlayerList(username) {

@@ -45,6 +45,7 @@ io.on('connection', function(socket) {
 	//TODO add descriptive comment
 	socket.on('disconnect', function () {
         console.log(socket.id);
+
 		for(var j = 0; j<hashstuff.length; ++j){
 			if(socket.id===hashstuff[j].id){
 				console.log('name : '+ hashstuff[j].name+" from room" + hashstuff[j].room);
@@ -64,8 +65,10 @@ io.on('connection', function(socket) {
 					}
 					disconnect.push(socketId);
 				}
-
+				console.log("trying to remove "+hashstuff[j].name);
+				socket.broadcast.emit('removeUser', hashstuff[j].name);
 				hashstuff.splice(j,0);
+
 			}
 		}
 
@@ -113,8 +116,11 @@ io.on('connection', function(socket) {
 				name: username,
 				id: socket.id
 			}
+			socket.broadcast.emit('newUser', username);
+
 			hashstuff.push(socketId);
 			socket.emit('successJoin');
+
 		}
 		else if(check){
 		var room = findRoom(roomCode);
@@ -131,7 +137,9 @@ io.on('connection', function(socket) {
 				socket.join(roomCode);
 				addUserToRoom(roomCode,username);//calls function that adds to room
 				var host = false;
-				io.to(roomCode).emit('newUser', username, host);
+				socket.broadcast.emit('newUser', username);
+
+				//io.to(roomCode).emit('newUser', username);
 				socket.emit('successJoin');
 			// //Add the room to activeRooms
 			 //console.log(user);
@@ -207,8 +215,9 @@ io.on('connection', function(socket) {
 		activeRooms.push(room);
 
 		//Send the newUser message to clients that are listening on roomCode
-		var host = true;
-		io.to(roomCode).emit('newUser', username, host);
+
+
+		socket.emit('newUser', username);
 
 	});
 
