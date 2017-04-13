@@ -214,10 +214,29 @@ io.on('connection', function(socket) {
 		assignRoles(room);
 		printRemaining(room);
 
-		io.to(roomCode).emit('gameStarted', getUserStatuses(room));
+		io.to(roomCode).emit('gameStarted');
 		if(hostID!==0){
 		hostID.emit('onCreate', 'for your eyes only');
 		}
+	});
+
+	socket.on('getMyRole', function(roomCode, name) {
+		room = findRoom(roomCode);
+		var user = findUser(room, name);
+
+		var others = [];
+		if(user.role === "mafia") {
+			others = getOtherMafia(room, name);
+		}
+
+		socket.emit('myRole', user.role, others);
+	});
+
+	socket.on('getUserStatuses', function(roomCode) {
+		var room = findRoom(roomCode);
+		var userStatuses = getUserStatuses(room);
+
+		socket.emit('userStatuses', userStatuses);
 	});
 
 	//Handle Voting logic for the day
@@ -231,10 +250,10 @@ io.on('connection', function(socket) {
 			if(votedOut) {
 				// console.log(votedOut + ' was voted out');
 				voteOut(room, votedOut);
-				Socket.to(roomCode).emit('eliminated', votedOut);
+				socket.to(roomCode).emit('eliminated', votedOut);
 			} else {
 				console.log('Nobody was voted out');
-				Socket.to(roomCode).emit('noElimination')
+				socket.to(roomCode).emit('noElimination');
 			}
 		} else {
 			console.log("      " + room.votes.length + ' out of ' + room.totalRemaining + ' votes submitted');
@@ -262,6 +281,14 @@ function findRoom(code) {
 	console.log("could not find room");
 }
 
+function findUser(room, name) {
+	for(var i = 0; i < room.users.length; i++) {
+		if(room.users[i].name === name) {
+			return room.users[i];
+		}
+	}
+	return null;
+}
 
 //----------------------------------------------------
 // Initialization helpers
@@ -353,6 +380,17 @@ function printPlayers(room) {
 	for(var i = 0; i < room.users.length; i++) {
 		console.log("      " + room.users[i].name + ": " + room.users[i].role + " - alive: " + room.users[i].alive);
 	}
+}
+
+function getOtherMafia(room, name) {
+	var others = [];
+	for(var i = 0; i < room.users.length; i++) {
+		if(room.users[i].role === "mafia" && room.users[i].name !== name) {
+			others.push(room.users[i].name);
+		}
+	}
+
+	return others;
 }
 
 //Get alive/dead status of each user
