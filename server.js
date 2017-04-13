@@ -249,34 +249,36 @@ io.on('connection', function(socket) {
 			console.log("      All votes submitted");
 			var votedOut = tallyVotes(room);
 			var remaining = {
+				total: room.totalRemaining,
 				citizens: room.remainingCitizens,
 				mafia: room.remainingMafia,
 				doctor: room.remainingDoctor,
 				detective: room.remainingDetective
 			};
+			console.log("remainingObj: " + remaining);
 			if(votedOut) {
 				votingTime=1;
 				var votedRole = '';
 				// console.log(votedOut + ' was voted out');
 				for(var s = 0;s<room.users.length;++s){
-					if(room.users[i].name===votedOut){
-						votedRole = room.users[i].role;
+					if(room.users[s].name === votedOut){
+						votedRole = room.users[s].role;
 						console.log('voted out person ('+votedOut+') was a '+votedRole);
 					}
 				}
 				voteOut(room, votedOut);
-				socket.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
+				io.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
 			}
 			else if(votingTime>0){
 					votingTime=1;
 					console.log('Nobody was voted out, not revoting');
-					socket.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
+					io.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
 
 			}
 			else{
 				votingTime--;
 				console.log('Nobody was voted out, revoting');
-				socket.to(roomCode).emit('revoting');
+				io.to(roomCode).emit('revoting');
 			}
 		}
 		else {
@@ -293,17 +295,17 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on('getRemainingRoles', function(roomCode) {
-		var room = findRoom(roomCode);
-		var remaining = {
-			citizens: room.remainingCitizens,
-			mafia: room.remainingMafia,
-			doctor: room.remainingDoctor,
-			detective: room.remainingDetective
-		};
-		console.log(remaining);
-		socket.emit('remainingRoles', remaining);
-	})
+	// socket.on('getRemainingRoles', function(roomCode) {
+	// 	var room = findRoom(roomCode);
+	// 	var remaining = {
+	// 		citizens: room.remainingCitizens,
+	// 		mafia: room.remainingMafia,
+	// 		doctor: room.remainingDoctor,
+	// 		detective: room.remainingDetective
+	// 	};
+	// 	console.log(remaining);
+	// 	socket.emit('remainingRoles', remaining);
+	// })
 
 });
 

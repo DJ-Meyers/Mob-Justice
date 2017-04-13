@@ -230,12 +230,12 @@ socket.on('eliminatedRole', function(role) {
     var eliminatedRole = role;
 });
 
-socket.on('remainingRoles', function(remaining) {
-    var remainingCitizens = remaining.citizens;
-    var remainingMafia = remaining.mafia;
-    var remainingDoctor = remaining.doctor;
-    var remainingDetective = remaining.detective;
-});
+// socket.on('remainingRoles', function(remaining) {
+//     var remainingCitizens = remaining.citizens;
+//     var remainingMafia = remaining.mafia;
+//     var remainingDoctor = remaining.doctor;
+//     var remainingDetective = remaining.detective;
+// });
 
 //----------------------------------------------------
 // Helper Functions
@@ -372,11 +372,9 @@ function beginEvening(votedOut, votedRole, remaining) {
     //Set phase to Instructions, change alert color
     phase.text(' - Evening');
     roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
-    socket.emit('getRemainingRoles', roomCode);
+    // socket.emit('getRemainingRoles', roomCode);
     if(votedOut) {
-        // Get my role
-        socket.emit('getEliminatedRole', roomCode, name);
-        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + eliminatedRole + ".  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + votedRole + ".  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     } else {
         instruction.html("<p>Nobody was killed today.  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     }
@@ -396,6 +394,12 @@ function beginEvening(votedOut, votedRole, remaining) {
     //Change phase to day
     //beginDay();
 }
+
+function beginNight() {
+    console.log('It is night, my dudes.  AHHHHH');
+}
+
+
 function revoteDay() {
     socket.emit('getUserStatuses', roomCode);
 }
