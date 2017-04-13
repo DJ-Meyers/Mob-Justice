@@ -245,8 +245,10 @@ io.on('connection', function(socket) {
 		var room = findRoom(roomCode);
 		console.log("\n" + roomCode + ": " + name + " voted for " + target);
 		room.votes.push(target);
+
 		if(room.votes.length === room.totalRemaining) {
 			console.log("      All votes submitted");
+
 			var votedOut = tallyVotes(room);
 			var remaining = {
 				citizens: room.remainingCitizens,
@@ -267,7 +269,7 @@ io.on('connection', function(socket) {
 				voteOut(room, votedOut);
 				socket.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
 			}
-			else if(votingTime>0){
+			else if(votingTime===0){
 					votingTime=1;
 					console.log('Nobody was voted out, not revoting');
 					socket.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
@@ -276,6 +278,7 @@ io.on('connection', function(socket) {
 			else{
 				votingTime--;
 				console.log('Nobody was voted out, revoting');
+				room.votes = [];
 				socket.to(roomCode).emit('revoting');
 			}
 		}

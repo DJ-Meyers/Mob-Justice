@@ -215,11 +215,13 @@ socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
 });
 
 socket.on('revoting', function() {
+        //TODO spencer
         console.log('No elimination.  Revote');
-        //revoteDay();
+        revoteDay();
 });
 
 socket.on('gameOver', function(winningTeam, teamMembers) {
+        //TODO spencer, maybe look at server and check there
         console.log(winningTeam+' won with players: '+teamMembers);
 
 });
