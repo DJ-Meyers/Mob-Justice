@@ -44,32 +44,7 @@ block content
             ul.list-group.align-middle.list-group-flush#gamePlayerList
             div.card-block#voteButtonDiv
                 button.btn.btn-primary.btn-block#voteButton(type="button")
-    //-         
-    //- div.hidden#day
-    //-     div.card
-    //-         div.card-block
-    //-             h4.card-title.alert.alert-info.align-middle.roomCodeTitle(role="alert")
-    //-                 strong Room Code: 
-    //-                 span.roomCodeSpan
-    //-                 span.phase - Day
-    //-         ul.list-group.align-middle.list-group-flush#dayPlayerList
-    //-         div.card-block#daySubmitButton
-    //-     
-    //- div#dayWaitingRoom.hidden
-    //-     div.card.text-center.mid
-    //-         div.card-block
-    //-             h4.card-title Special title treatment
-    //-                 p.card-text With supporting text below as a natural laed-in to additional context
-    //-                     button.btn.btn-primary(type="button" data-toggle="collapse" data-target="#collapseExample" aria-expended="false" aria-controls="collapseExample") 
-    //-                     div.collapse#collapseExample Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident.
-    //- 
-    //- div#votingRoom.hidden
-    //-     div.card.middle-align.mid 
-    //-         div.card-block
-    //-             h4.card-title.alert.alert-info.align-middle(role="alert") This alert needs your attention, but it's not super important.
-    //-         ul.list-group.align-middle.list-group-flush#playerList
-    //-         div.card-block
-    //-             button.btn.btn-outline-primary#submit(type="button") Submit
+    
 
     script(type="text/javascript", src="/socket.io/socket.io.js")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
@@ -147,12 +122,51 @@ block content
 
         joinSubmit.click(function() {
             //moved this part up here so it joins you to room before printing out people in room
-            console.log(name + " attempting to join " + roomCode);
-            socket.emit('join', joinCode.val(), joinName.val());
-            //socket.emit('getUsers',joinCode.val(),joinName.val());
+            name = joinName.val();
+            console.log(name + " attempting to join " + joinCode.val().toUpperCase());
+            socket.emit('join', joinCode.val().toUpperCase(), joinName.val());
         });
+        
+        
+        //----------------------------------------------------
+        // Socket logic
+        //----------------------------------------------------
+
+        //When a new user connects to the room you're in, add them to the playerList
+        socket.on('newUser', function(username) {
+            console.log("'newUser', " + username);
+            //console.log(name+" and username: "+username);
+            //if(host===true || name!==username){
+                addUserToGamePlayerList(username);
+            //}
+        });
+
+        socket.on('failedToCreate', function() {
+            console.log('failedToCreate');
+            //$('#joinDiv').find('form')[0].reset();
+            joinDiv.removeClass('vertical-center').addClass('hidden');
+            landing.addClass('vertical-center').removeClass('hidden');
+
+        });
+
+        //When you join a game, get the list of players already in the game and add them to the playerList
+        socket.on('usersList', function( names, username ){
+            console.log("'usersList', " + names + ", " + username);
+            if(username===name){
+                for(var i = 0;i<names.length;++i){
+                    addUserToGamePlayerList(names[i]);
+                }
+            }         
+        });
+        
+        socket.on('onCreate', function(msg) {
+            console.log("'onCreate', " + msg);
+        });
+        
         socket.on('successJoin', function(username, host) {
-            roomCode = joinCode.val();
+            console.log("'successJoin', " + username + ", " + host);
+            
+            roomCode = joinCode.val().toUpperCase();
             name = joinName.val();
 
             joinDiv.removeClass('vertical-center').addClass('hidden');
@@ -171,45 +185,13 @@ block content
             });
         });
 
-        //----------------------------------------------------
-        // Socket logic
-        //----------------------------------------------------
-
-        //When a new user connects to the room you're in, add them to the playerList
-        socket.on('newUser', function(username) {
-            //console.log(name+" and username: "+username);
-            //if(host===true || name!==username){
-                addUserToGamePlayerList(username);
-            //}
-            });
-
-        socket.on('failedToCreate', function() {
-            console.log("this got called");
-            //roomCode = " ";
-            //$('#joinDiv').find('form')[0].reset();
-            joinDiv.removeClass('vertical-center').addClass('hidden');
-            landing.addClass('vertical-center').removeClass('hidden');
-
-            });
-
-        //When you join a game, get the list of players already in the game and add them to the playerList
-        socket.on('usersList', function( names, username ){
-            if(username===name){
-                for(var i = 0;i<names.length;++i){
-                    addUserToGamePlayerList(names[i]);
-                }
-            }         
-        });
-        socket.on('onCreate', function(msg) {
-            console.log("got pinged "+ msg);
-        });
-        socket.on('removeUser', function(userName) {
-            console.log("server requests "+userName+" from here")
-            removeUserFromGamePlayerList(userName);
+        socket.on('removeUser', function(username) {
+            console.log("'removeUser', " + username)
+            removeUserFromGamePlayerList(username);
         });
         //When the server responds to the request to start the game
         socket.on('gameStarted', function(userStatuses) {
-            console.log('Game starting');
+            console.log("'gameStarted', " + userStatuses);
             $('.badge-pill').remove();
 
             $('.list-group-item').addClass('list-group-item-action');
@@ -217,54 +199,8 @@ block content
 
             //Change phase to day
             beginDay(userStatuses);
-            });
-        //socket.on('gameStarted', function() {
-        //    console.log('Game starting');
-        //this pulls everyone into the day room when game starts
-        //    waitingRoom.removeClass('long-content').addClass('hidden');
-        //        dayWaitingRoom.addClass('vertical-center').removeClass('hidden');
-
-        //    });   
-
-        //- joinVoting.click(function() {
-        //- 
-        //-     waitingRoom.removeClass('vertical-center').addClass('hidden');
-        //-     votingRoom.addClass('vertical-center').removeClass('hidden');
-        //- 
-        //-     if(init===false){
-        //-         console.log("here");
-        //-         var listGroup = document.getElementById('playerList');
-        //-         for(var p = 0; p < playerList.length; p++) {
-        //-             var thisPlayer = document.createElement('li');
-        //-             thisPlayer.classList.add('list-group-item','list-group-item-action');
-        //- 
-        //-             if(playerList[p].status === "dead") {
-        //-                 thisPlayer.classList.add('disabled');
-        //-             }
-        //- 
-        //-             thisPlayer.appendChild(document.createTextNode(playerList[p].name));
-        //-             thisPlayer.addEventListener('click', function() {
-        //-                 /*Anything active make inactive*/
-        //-                 if(!this.classList.contains('disabled')) {
-        //-                     var currentActive = document.querySelectorAll('.active');
-        //-                     for(var j = 0; j < currentActive.length; j++){
-        //-                         currentActive[j].classList.remove('active');
-        //-                     }
-        //- 
-        //- 
-        //-                     this.classList.add('active');
-        //- 
-        //-                     target = this.innerHTML;
-        //-                     console.log(target);
-        //-                 }
-        //- 
-        //-             });
-        //-             listGroup.appendChild(thisPlayer);
-        //-             init = true;
-        //-         }
-        //-     }
-        //- 
-        //- });
+        });
+        
 
         //----------------------------------------------------
         // Helper Functions
@@ -277,7 +213,7 @@ block content
 
         //Add a player to the list and display them in the input group        
         function addUserToGamePlayerList(username) {
-            //- console.log("this is called");
+            console.log("adding " + username);
             var thisPlayer = document.createElement('li');
             thisPlayer.classList.add('list-group-item','justify-content-between');
             thisPlayer.appendChild(document.createTextNode(username));

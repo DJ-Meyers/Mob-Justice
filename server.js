@@ -44,7 +44,7 @@ io.on('connection', function(socket) {
 	//TODO join
 	//TODO add descriptive comment
 	socket.on('disconnect', function () {
-        console.log(socket.id);
+        // console.log(socket.id );
 
 		for(var j = 0; j<hashstuff.length; ++j){
 			if(socket.id===hashstuff[j].id){
@@ -75,7 +75,6 @@ io.on('connection', function(socket) {
     });
 //TODO add descriptive stuff
 	function checkIfDisc(roomCode, username){
-		console.log("here");
 		for(var u = 0; u < disconnect.length; ++u){
 			if(disconnect[u].room===roomCode){
 				console.log("here at disconnect");
@@ -105,7 +104,7 @@ io.on('connection', function(socket) {
 		return true;
 	};
 	socket.on('join', function(roomCode, username) {
-		console.log(socket.id);
+		// console.log(socket.id);
 		var disc = checkIfDisc(roomCode,username);
 		var check = checkIfExists(roomCode,username);
 		if(disc){
@@ -137,31 +136,14 @@ io.on('connection', function(socket) {
 				socket.join(roomCode);
 				addUserToRoom(roomCode,username);//calls function that adds to room
 				var host = false;
-				socket.broadcast.emit('newUser', username);
 
-				//io.to(roomCode).emit('newUser', username);
+				//Let other users know that I joined
+				socket.broadcast.to(roomCode).emit('newUser', username);
+
+				//Let this user know they successfully joined
 				socket.emit('successJoin');
-			// //Add the room to activeRooms
-			 //console.log(user);
-			 //var users = [user];
-			// if(!room) {
-			// 	room = {
-			// 		roomCode: roomCode,
-			// 		users: users,
-			// 		started: false
-			// 	};
-			// 	activeRooms.push(room);
-			// 	io.to(roomCode).emit('newUser', username);
-			// } else {
-			// 	if(!room.started) {
-			// 		room.users.push(user);
-			// 		io.to(roomCode).emit('newUser', username);
-			// 	} else {
-			// 		console.log( username + ' is attempting to join has already begun.');
-			// 	}
-			// }
-			// console.log(activeRooms);
-				console.log(username + ' has connected to ' + roomCode);
+
+				console.log(roomCode + ': ' + username + ' has connected.');
 		}}
 		else{
 			socket.emit('failedToCreate');
@@ -175,7 +157,7 @@ io.on('connection', function(socket) {
 		//TODO prevent this from breaking when a user enters an invalid room code
 		var room = findRoom(roomCode);
 		var names = [];
-		console.log(room);
+		//console.log(room);
 		for(var u = 0; u < room.users.length; u++) {
 			var thisName = room.users[u].name;
 			names.push(thisName);
@@ -188,7 +170,8 @@ io.on('connection', function(socket) {
 
 		//Connect to the room (Creates a new room, assuming a room with this code doesn't exist.  That should VERY rarely happen.  1/26^4)
 		socket.join(roomCode);
-		console.log(username + ' has connected to room: ' + roomCode);
+
+		console.log(roomCode + ': ' + username + ' has connected.');
 		var socketId = {
 				room: roomCode,
 				name: username,
@@ -227,11 +210,11 @@ io.on('connection', function(socket) {
 		var room = findRoom(roomCode);
 		// console.log(room);
 		room.started = true;
+		console.log('\nGame ' + roomCode + " starting");
 		assignRoles(room);
 		printRemaining(room);
 
 		io.to(roomCode).emit('gameStarted', getUserStatuses(room));
-		console.log('Started game ' + roomCode + " successfully");
 		if(hostID!==0){
 		hostID.emit('onCreate', 'for your eyes only');
 		}
@@ -239,21 +222,22 @@ io.on('connection', function(socket) {
 
 	//Handle Voting logic for the day
 	socket.on('voteDay', function(roomCode, name, target) {
-		console.log(name + " voted for " + target);
 		var room = findRoom(roomCode);
+		console.log("\n" + roomCode + ": " + name + " voted for " + target);
 		room.votes.push(target);
 		if(room.votes.length === room.totalRemaining) {
+			console.log("      All votes submitted");
 			var votedOut = tallyVotes(room);
 			if(votedOut) {
-				console.log(votedOut + ' was voted out');
+				// console.log(votedOut + ' was voted out');
 				voteOut(room, votedOut);
-				//Socket.to(roomCode).emit('eliminate', votedOut);
+				Socket.to(roomCode).emit('eliminated', votedOut);
 			} else {
 				console.log('Nobody was voted out');
-				//Socket.to(roomCode).emit('noElimination')
+				Socket.to(roomCode).emit('noElimination')
 			}
 		} else {
-			console.log(room.votes.length + ' voted');
+			console.log("      " + room.votes.length + ' out of ' + room.totalRemaining + ' votes submitted');
 		}
 	});
 
@@ -266,12 +250,11 @@ io.on('connection', function(socket) {
 // General Helpers
 //----------------------------------------------------
 function findRoom(code) {
-	console.log("code: "+code)
+	// console.log('Finding room ' + code)
 	for(var i = 0; i < activeRooms.length; i++) {
-		//console.log(i + ": " + activeRooms[i]);
 		var roomCode = activeRooms[i].roomCode;
 		if(roomCode === code) {
-			console.log('here '+activeRooms[i]);
+			// console.log("Room " + code + " found");
 			return activeRooms[i];
 		}
 	}
@@ -347,9 +330,7 @@ function assignRoles(room) {
 		}
 	}
 
-	for(var i = 0; i < room.users.length; i++) {
-		console.log(room.users[i].name + ": " + room.users[i].role);
-	}
+	printPlayers(room);
 }
 
 
@@ -359,11 +340,19 @@ function assignRoles(room) {
 
 //Print remaining # of each type of player
 function printRemaining(room) {
-	console.log('Total: ' + room.totalRemaining);
-	console.log('Mafia: ' + room.mafiaRemaining);
-	console.log('Citizens: ' + room.citizensRemaining);
-	console.log('Doctor: ' + room.doctorRemaining);
-	console.log('Detective: ' + room.detectiveRemaining);
+	console.log('\n' + room.roomCode + ': Remaining');
+	console.log('      Total: ' + room.totalRemaining);
+	console.log('      Mafia: ' + room.mafiaRemaining);
+	console.log('      Citizens: ' + room.citizensRemaining);
+	console.log('      Doctor: ' + room.doctorRemaining);
+	console.log('      Detective: ' + room.detectiveRemaining);
+}
+
+function printPlayers(room) {
+	console.log('\n' + room.roomCode + ': Players');
+	for(var i = 0; i < room.users.length; i++) {
+		console.log("      " + room.users[i].name + ": " + room.users[i].role + " - alive: " + room.users[i].alive);
+	}
 }
 
 //Get alive/dead status of each user
@@ -383,12 +372,6 @@ function getUserStatuses (room) {
 function tallyVotes(room) {
 	var usersVotedFor = [];
 	for(var i = 0; i < room.votes.length; i++) {
-		// if(usersVotedFor.length === 0) {
-		// 	usersVotedFor.push({
-		// 		name: room.votes[i],
-		// 		num: 1
-		// 	});
-		// } else {
 		var found = false;
 		for(var j = 0; j < usersVotedFor.length; j++) {
 			if(room.votes[i] === usersVotedFor[j].name) {
@@ -405,7 +388,12 @@ function tallyVotes(room) {
 		}
 		// }
 	}
-	console.log(usersVotedFor);
+
+	console.log("\n" + room.roomCode + ": Tallying Votes");
+	for(var i = 0; i < usersVotedFor.length; i++) {
+		console.log("      " + usersVotedFor[i].num + " votes for " + usersVotedFor[i].name);
+	}
+
 	return getMajority(usersVotedFor, room.votes.length);
 }
 
@@ -418,7 +406,7 @@ function getMajority(usersVotedFor, totalVotes) {
 			maxTarget = usersVotedFor[i].name;
 		}
 	}
-	console.log(maxTarget + ": " + maxVotes);
+	// console.log(maxTarget + ": " + maxVotes);
 	if(maxVotes >= totalVotes / 2) {
 		return maxTarget;
 	} else {
@@ -430,7 +418,7 @@ function getMajority(usersVotedFor, totalVotes) {
 function voteOut(room, votedOut) {
 	for (var i = 0; i < room.users.length; i++) {
 		if(room.users[i].name === votedOut) {
-			console.log('eliminating ' + votedOut);
+			console.log('      Eliminating ' + votedOut);
 			room.users[i].alive = false;
 			eliminate(room, room.users[i]);
 		}
