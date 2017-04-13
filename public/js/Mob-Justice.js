@@ -154,7 +154,59 @@ socket.on('gameStarted', function() {
 
     beginInstructions();
 });
+socket.on('myRole', function(role, others) {
+    console.log('myRole: ' + role + ", others: " + others);
+    //Set instruction based on my role.
+    instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
+    if(role === "mafia") {
 
+        var othersString = "";
+        for(var i = 0; i < others.length; i++) {
+            if(i !== 0) {
+                othersString += ", ";
+            }
+
+            othersString += others[i];
+        }
+
+        instruction.append("<p>The other mafia members are: " + othersString + "</p>");
+    }
+});
+socket.on('userStatuses', function(userStatuses) {
+    //For each user, disable the their list group item if they're dead
+    $('.list-group-item').each(function() {
+        if(!isAlive($(this).text(), userStatuses)) {
+            $(this).addClass('disabled');
+            $(this).off('click');
+        }
+    });
+
+    //If this person is alive, allow them to vote
+    if(isAlive(name, userStatuses)) {
+        voteButton.prop('disabled', false);
+        //Prevent users from voting more than once.
+        voteButton.one('click', function() {
+            console.log('Voting for ' + target);
+            $('.active').removeClass('active');
+            $('.list-group-item').addClass('disabled');
+
+            $('.list-group-item').off('click');
+
+            instruction.text('Your vote has been submitted.  Waiting on others.');
+
+            socket.emit('voteDay', roomCode, name, target);
+            voteButton.addClass('disabled');
+        });
+    }
+});
+
+socket.on('eliminated', function(votedOut) {
+    console.log(votedOut + " has been voted out.");
+});
+
+socket.on('noElimination', function() {
+    console.log('No elimination.  Revote');
+});
 
 //----------------------------------------------------
 // Helper Functions
@@ -239,26 +291,6 @@ function beginInstructions() {
 
     // Get my role
     socket.emit('getMyRole', roomCode, name);
-
-    socket.on('myRole', function(role, others) {
-        console.log('myRole: ' + role + ", others: " + others);
-        //Set instruction based on my role.
-        instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
-        if(role === "mafia") {
-
-            var othersString = "";
-            for(var i = 0; i < others.length; i++) {
-                if(i !== 0) {
-                    othersString += ", ";
-                }
-
-                othersString += others[i];
-            }
-
-            instruction.append("<p>The other mafia members are: " + othersString + "</p>");
-        }
-    });
-
     voteButton.one('click', function() {
         $('.list-group-item').addClass('list-group-item-action');
 
@@ -296,40 +328,4 @@ function beginDay() {
 
 
     socket.emit('getUserStatuses', roomCode);
-
-    socket.on('userStatuses', function(userStatuses) {
-        //For each user, disable the their list group item if they're dead
-        $('.list-group-item').each(function() {
-            if(!isAlive($(this).text(), userStatuses)) {
-                $(this).addClass('disabled');
-                $(this).off('click');
-            }
-        });
-
-        //If this person is alive, allow them to vote
-        if(isAlive(name, userStatuses)) {
-            voteButton.prop('disabled', false);
-            //Prevent users from voting more than once.
-            voteButton.on('click', function() {
-                console.log('Voting for ' + target);
-                $('.active').removeClass('active');
-                $('.list-group-item').addClass('disabled');
-
-                $('.list-group-item').off('click');
-
-                instruction.text('Your vote has been submitted.  Waiting on others.');
-
-                socket.emit('voteDay', roomCode, name, target);
-                voteButton.addClass('disabled');
-            });
-        }
-    });
-
-    socket.on('eliminated', function(votedOut) {
-        console.log(votedOut + " has been voted out.");
-    });
-
-    socket.on('noElimination', function() {
-        console.log('No elimination.  Revote');
-    })
 }
