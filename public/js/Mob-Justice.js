@@ -206,7 +206,7 @@ socket.on('userStatuses', function(userStatuses) {
         });
     }
 });
-socket.on('movingOn', function(votedOut, votedRole, remaining) {
+socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
     console.log(votedOut + " has been voted out.");
 
     //TODO spencer - send to next day

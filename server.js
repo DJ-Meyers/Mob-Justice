@@ -265,12 +265,12 @@ io.on('connection', function(socket) {
 					}
 				}
 				voteOut(room, votedOut);
-				socket.to(roomCode).emit('movingOn', votedOut, votedRole, remaining);
+				socket.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
 			}
 			else if(votingTime>0){
 					votingTime=1;
 					console.log('Nobody was voted out, not revoting');
-					socket.to(roomCode).emit('movingOn', null, null, remaining);
+					socket.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
 
 			}
 			else{
