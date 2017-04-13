@@ -30,7 +30,7 @@ var gameRoom			=	$('#gameRoom');
     var voteButton      =   $('#voteButton');
 
 //Variables used to enact game Logic
-var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1;
+var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1, myRole="";
 
 
 
@@ -158,8 +158,9 @@ socket.on('gameStarted', function() {
 
 socket.on('myRole', function(role, others) {
     console.log('myRole: ' + role + ", others: " + others);
+    myRole = role;
     //Set instruction based on my role.
-    instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
+        instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
     if(role === "mafia") {
 
         var othersString = "";
@@ -170,7 +171,6 @@ socket.on('myRole', function(role, others) {
 
             othersString += others[i];
         }
-
         instruction.append("<p>The other mafia members are: " + othersString + "</p>");
     }
 });
@@ -285,6 +285,19 @@ function isAlive(name, userStatuses) {
 
     return false;
 }
+
+function disable(jQueryItem) {
+    jQueryItem.addClass('disabled');
+    jQueryItem.prop('disabled', true);
+    jQueryItem.off('click');
+}
+
+function enable(jQueryItem) {
+    jQueryItem.removeClass('disabled');
+    jQueryItem.prop('disabled', false);
+}
+
+
 //----------------------------------------------------
 // Reconnect Logic
 //----------------------------------------------------
@@ -341,7 +354,7 @@ function beginDay() {
     target = "";
     //Replace Phase with Day, change instruction, and change Alert Color
     phase.text(' - Day');
-    instruction.text("The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.");
+    instruction.html("<p>The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.</p>");
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-success');
 
@@ -402,7 +415,37 @@ function beginEvening(votedOut, votedRole, remaining) {
 function beginNight() {
     console.log('It is night, my dudes.  AHHHHH');
 
+    target = "";
+    //Replace Phase with Day, change instruction, and change Alert Color
+    phase.text(' - Night');
+    instruction.html("<p>The night will end after the mafia votes to kill a member of the the town.  Mafia members will click on a player's name to indicate their choice to the other mafia members.  The mafia members then press the submit button to vote for that person when they are ready.  The mafia wins if they outnumber the citizens.</p><p>The citizens can choose to ready up whenever they want.  Try not to look at who else is pressing buttons on their phone to get an unfair advantage.</p>");
+    gamePlayerList.removeClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
+    socket.emit('getUserStatuses', roomCode);
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
+    voteButton.text('Vote');
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
+
+    //Add the on click function for all users in the list group to select and target them
+    if(myRole === "mafia") {
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            target = $(this).text();
+            console.log('Target: ' + target);
+        });
+    } else {
+        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');
+    }
+
+
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
 }
 
 
