@@ -211,7 +211,7 @@ socket.on('movingOn', function(votedOut, votedRole, remaining) {
 
     //TODO spencer - send to next day
     //Day is over.  Begin Evening
-    beginEvening(votedOut);
+    beginEvening(votedOut, votedRole, remaining);
 });
 
 socket.on('revoting', function() {
