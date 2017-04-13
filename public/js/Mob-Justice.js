@@ -365,7 +365,7 @@ function beginDay() {
 
 }
 
-function beginEvening(votedOut) {
+function beginEvening(votedOut, votedRole, remaining) {
     //Hide player list
     gamePlayerList.addClass('hidden');
     var remaining, eliminatedRole;
