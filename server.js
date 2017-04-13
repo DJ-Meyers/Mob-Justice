@@ -278,16 +278,23 @@ io.on('connection', function(socket) {
 					// console.log(room);
 					var remaining = {
 						total: room.totalRemaining,
-						citizens: room.remainingCitizens,
-						mafia: room.remainingMafia,
-						doctor: room.remainingDoctor,
-						detective: room.remainingDetective
+						citizens: room.citizensRemaining,
+						mafia: room.mafiaRemaining,
+						doctor: room.doctorRemaining,
+						detective: room.detectiveRemaining
 					};
 					// console.log("remainingObj: " + remaining);
 					io.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
 
 			}
 			else{
+				var remaining = {
+					total: room.totalRemaining,
+					citizens: room.citizensRemaining,
+					mafia: room.mafiaRemaining,
+					doctor: room.doctorRemaining,
+					detective: room.detectiveRemaining
+				};
 				votingTime--;
 				console.log('Nobody was voted out, revoting');
 				io.to(roomCode).emit('revoting');
