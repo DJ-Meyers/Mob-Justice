@@ -273,6 +273,35 @@ socket.on('eliminatedRole', function(role) {
     console.log(role);
     var eliminatedRole = role;
 });
+socket.on('mafiaVote', function(role) {
+    //show voting for mafia
+    //emit ready for morning
+});
+socket.on('nonMafiaVote', function(role) {
+    //call show function
+    //emit ready for doctor voting
+});
+socket.on('docVote', function(role) {
+    //show voting for doc
+    //emit ready for detective voting
+});
+socket.on('nonDocVote', function(role) {
+    //call show function
+    //emit ready for detective voting
+});
+socket.on('detVote', function(role) {
+    //show voting for detective
+    //emit ready for morning
+});
+socket.on('nonDetVote', function(role) {
+    //call show function
+    //emit ready for morning
+});
+socket.on('startNewDay', function(role) {
+});
+socket.on('mafiaWins', function(role) {
+    console.log('mafia wins');
+});
 
 // socket.on('remainingRoles', function(remaining) {
 //     var remainingCitizens = remaining.citizens;
@@ -457,6 +486,12 @@ function beginEvening(votedOut, votedRole, remaining) {
 
 function beginNight() {
     console.log('It is night, my dudes.  AHHHHH');
+    //spencer
+    //send request to night for what to do
+    //recieve what to do back
+
+    //spencer
+
 
     target = "";
     //Replace Phase with Day, change instruction, and change Alert Color
@@ -489,6 +524,8 @@ function beginNight() {
 
 
     $('li:contains("' + name + '")').off('click').addClass('disabled');
+    //spencer
+    //send me mafia night role
 }
 
 

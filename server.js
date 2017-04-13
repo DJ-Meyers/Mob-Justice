@@ -324,6 +324,37 @@ io.on('connection', function(socket) {
 			socket.emit('eliminatedRole', user.role);
 		}
 	});
+	socket.on('requestMafiaNightRole', function(roomCode){
+		//check if mafia
+				//if so, emit to mafia vote
+				//if not, emit to non mafia vote
+	});
+	socket.on('requestDocNightRole', function(roomCode){
+		//check if doc exists
+			//if so, check if role is doc
+				//if so, emit doc vote
+				//if not, emit non doc vote
+			//if not, check if detective is alive
+				//if so, check if role is detective
+					//if so, emit det vote
+					//if not, emit non det vote
+				//if not, check if won
+				//else send to start morning
+	});
+	socket.on('requestDetNightRole', function(roomCode){
+		//check if detective is alive
+			//if so, check if role is detective
+				//if so, emit det vote
+				//if not, emit non det vote
+			//if not, tally up and check if mafia won
+				//if so, send to game over mafia win
+				//if not, send to start morning
+	});
+	socket.on('requestDetNightRole', function(roomCode){
+		//if not, tally up and check if mafia won
+			//if so, send to game over mafia win
+			//if not, send to start morning
+	});
 
 	// socket.on('getRemainingRoles', function(roomCode) {
 	// 	var room = findRoom(roomCode);
