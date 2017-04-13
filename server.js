@@ -248,14 +248,6 @@ io.on('connection', function(socket) {
 		if(room.votes.length === room.totalRemaining) {
 			console.log("      All votes submitted");
 			var votedOut = tallyVotes(room);
-			var remaining = {
-				total: room.totalRemaining,
-				citizens: room.remainingCitizens,
-				mafia: room.remainingMafia,
-				doctor: room.remainingDoctor,
-				detective: room.remainingDetective
-			};
-			console.log("remainingObj: " + remaining);
 			if(votedOut) {
 				votingTime=1;
 				var votedRole = '';
@@ -267,11 +259,31 @@ io.on('connection', function(socket) {
 					}
 				}
 				voteOut(room, votedOut);
+
+				// console.log(room);
+				var remaining = {
+					total: room.totalRemaining,
+					citizens: room.citizensRemaining,
+					mafia: room.mafiaRemaining,
+					doctor: room.doctorRemaining,
+					detective: room.detectiveRemaining
+				};
+				// console.log("remainingObj: " + remaining);
 				io.to(roomCode).emit('movingOnToEndDay', votedOut, votedRole, remaining);
 			}
 			else if(votingTime>0){
 					votingTime=1;
 					console.log('Nobody was voted out, not revoting');
+
+					// console.log(room);
+					var remaining = {
+						total: room.totalRemaining,
+						citizens: room.remainingCitizens,
+						mafia: room.remainingMafia,
+						doctor: room.remainingDoctor,
+						detective: room.remainingDetective
+					};
+					// console.log("remainingObj: " + remaining);
 					io.to(roomCode).emit('movingOnToEndDay', null, null, remaining);
 
 			}
