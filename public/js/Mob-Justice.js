@@ -175,36 +175,8 @@ socket.on('myRole', function(role, others) {
     }
 });
 socket.on('userStatuses', function(userStatuses) {
-    //For each user, disable the their list group item if they're dead
-    $('.list-group-item').each(function() {
-        if(!isAlive($(this).text(), userStatuses)) {
-            $(this).addClass('disabled');
-            $(this).off('click');
-        }
-    });
-
-    //If this person is alive, allow them to vote
-    if(isAlive(name, userStatuses)) {
-        voteButton.prop('disabled', false);
-        //Prevent users from voting more than once.
-        voteButton.on('click', function() {
-            if(target) {
-                console.log('Voting for ' + target);
-                $('.active').removeClass('active');
-                $('.list-group-item').addClass('disabled');
-
-                $('.list-group-item').off('click');
-
-                instruction.text('Your vote has been submitted.  Waiting on others.');
-
-                socket.emit('voteDay', roomCode, name, target);
-                voteButton.addClass('disabled');
-                voteButton.prop('disabled', true);
-            } else {
-                console.log('Cannot vote for nobody.');
-            }
-        });
-    }
+    console.log(userStatuses);
+    resetVoting(userStatuses, name);
 });
 socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
     console.log(votedOut + " has been voted out.");
@@ -274,15 +246,41 @@ function createRoomCode() {
     return code;
 }
 
+function resetVoting(userStatuses, name) {
+    disableDead(userStatuses);
+    disableMe(name);
+}
+
+function disableDead(userStatuses) {
+    console.log($('.list-group-item'));
+    $('.list-group-item').each(function() {
+        if(isAlive($(this).text(), userStatuses)) {
+            console.log('enabling: ' + $(this));
+            enable($(this));
+        } else {
+            console.log('disabling: ' + $(this));
+            disable($(this));
+        }
+    });
+}
+
+function disableMe(name) {
+    disable(findNameInJQueryList(name));
+}
+
+function findNameInJQueryList(name) {
+    return $(".list-group-item:contains('" + name + "')");
+}
+
 //Is the user with <name> alive?
 function isAlive(name, userStatuses) {
+    // console.log('isAlive: ' + userStatuses);
     for(var i = 0; i < userStatuses.length; i++) {
         if(userStatuses[i].name === name) {
             console.log(userStatuses[i].name + ": " + userStatuses[i].alive);
             return (userStatuses[i].alive);
         }
     }
-
     return false;
 }
 
@@ -295,6 +293,17 @@ function disable(jQueryItem) {
 function enable(jQueryItem) {
     jQueryItem.removeClass('disabled');
     jQueryItem.prop('disabled', false);
+    jQueryItem.click(function() {
+        $('.active').removeClass('active');
+
+        //enable vote button
+        voteButton.removeClass('disabled');
+        voteButton.prop('disabled', false);
+
+        $(this).addClass('active');
+        target = $(this).text();
+        console.log('Target: ' + target);
+    });
 }
 
 
@@ -340,12 +349,9 @@ function beginInstructions() {
     voteButton.one('click', function() {
         $('.list-group-item').addClass('list-group-item-action');
 
-
         beginDay();
     });
 
-    //Change phase to day
-    //beginDay();
 }
 
 //Begin Day phase of game
@@ -362,22 +368,23 @@ function beginDay() {
     socket.emit('getUserStatuses', roomCode);
 
     //Remove eventListeners and disabled status on button for everyone except the dead
-    voteButton.off('click');
     voteButton.text('Vote');
-    voteButton.addClass('disabled');
-    voteButton.prop('disabled', true);
-
-    //Add the on click function for all users in the list group to select and target them
-    $('.list-group-item').click(function() {
-        $('.active').removeClass('active');
-        voteButton.removeClass('disabled');
-
-        $(this).addClass('active');
-        target = $(this).text();
-        console.log('Target: ' + target);
+    disable(voteButton);
+    voteButton.click(function() {
+        socket.emit('voteDay', roomCode, name, target);
     });
 
-    $('li:contains("' + name + '")').off('click').addClass('disabled');
+    //Add the on click function for all users in the list group to select and target them
+    // $('.list-group-item').click(function() {
+    //     $('.active').removeClass('active');
+    //     voteButton.removeClass('disabled');
+    //
+    //     $(this).addClass('active');
+    //     target = $(this).text();
+    //     console.log('Target: ' + target);
+    // });
+    //
+    // $('li:contains("' + name + '")').off('click').addClass('disabled');
 
 }
 
