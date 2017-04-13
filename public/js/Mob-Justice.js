@@ -30,7 +30,7 @@ var gameRoom			=	$('#gameRoom');
     var voteButton      =   $('#voteButton');
 
 //Variables used to enact game Logic
-var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1;
+var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1, myRole="";
 
 
 
@@ -158,8 +158,9 @@ socket.on('gameStarted', function() {
 
 socket.on('myRole', function(role, others) {
     console.log('myRole: ' + role + ", others: " + others);
+    myRole = role;
     //Set instruction based on my role.
-    instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
+        instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
     if(role === "mafia") {
 
         var othersString = "";
@@ -170,7 +171,6 @@ socket.on('myRole', function(role, others) {
 
             othersString += others[i];
         }
-
         instruction.append("<p>The other mafia members are: " + othersString + "</p>");
     }
 });
@@ -249,6 +249,7 @@ socket.on('userStatuses', function(userStatuses) {
 });
 socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
     console.log(votedOut + " has been voted out.");
+    console.log(remaining);
 
     //TODO spencer - send to next day
     //Day is over.  Begin Evening
@@ -327,6 +328,19 @@ function isAlive(name, userStatuses) {
 
     return false;
 }
+
+function disable(jQueryItem) {
+    jQueryItem.addClass('disabled');
+    jQueryItem.prop('disabled', true);
+    jQueryItem.off('click');
+}
+
+function enable(jQueryItem) {
+    jQueryItem.removeClass('disabled');
+    jQueryItem.prop('disabled', false);
+}
+
+
 //----------------------------------------------------
 // Reconnect Logic
 //----------------------------------------------------
@@ -353,7 +367,9 @@ function beginInstructions() {
     //Set phase to Instructions, change alert color
     phase.text(' - Roles & Instructions');
     roomCodeTitle.removeClass('alert-info').addClass('alert-warning');
-    instruction.html("<p>Mob Justice is a game in which citizens must take their town back from the Mafia that has been killing them one by one.  Every day the citizens will meet and try to figure out who is a member of the mafia.  They will have to decide on one member of the town to be killed.  If the citizens successfully eliminate all the members of the Mafia, then their town is saved and they win the game.</p><p>However, the Mafia can blend into the daily meetings and get to voice their opinions on who should be killed.  Additionally, the Mafia will continue kill one citizen every night.  If all the citizens are killed, the Mafia rule the town and win the game.</p><p>Among the citizens are a doctor and a detective.  Each night, the doctor can save one person (including themselves) from being killed by the mafia; however, they cannot save the same person two nights in a row.  Every night, the detective can uncover the role of any other member of the town.  The Doctor and Detective should be wary about revealing their roles, as the Mafia may choose to target them.</p>");
+    instruction.html(
+        "<p>Mob Justice is a game in which citizens must take their town back from the Mafia that has been killing them one by one.  Every day the citizens will meet and try to figure out who is a member of the mafia.  They will have to decide on one member of the town to be killed.  They will have two chances to try to form a majority voting on which player to kill.  If the citizens fail to form a majority, they will have one more chance to vote that day.  If they fail to form a majority, they do not kill anyone.  If the citizens successfully eliminate all the members of the Mafia, then their town is saved and they win the game.</p><p>However, the Mafia can blend into the daily meetings and get to voice their opinions on who should be killed.  Additionally, the Mafia will continue kill one citizen every night.  If all the citizens are killed, the Mafia rule the town and win the game.</p><p>Among the citizens are a doctor and a detective.  Each night, the doctor can save one person (including themselves) from being killed by the mafia; however, they cannot save the same person two nights in a row.  Every night, the detective can uncover the role of any other member of the town.  The Doctor and Detective should be wary about revealing their roles, as the Mafia may choose to target them.</p>"
+    );
 
     //Set button to "I'm Ready"
     voteButton.off('click');
@@ -381,7 +397,7 @@ function beginDay() {
     target = "";
     //Replace Phase with Day, change instruction, and change Alert Color
     phase.text(' - Day');
-    instruction.text("The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.");
+    instruction.html("<p>The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.</p>");
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-success');
 
@@ -417,15 +433,16 @@ function beginEvening(votedOut, votedRole, remaining) {
     roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
     // socket.emit('getRemainingRoles', roomCode);
     if(votedOut) {
-        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + votedRole + ".  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + votedRole + ".  There are currently " + remaining.total + " total remaining townspeople, including " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     } else {
-        instruction.html("<p>Nobody was killed today.  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+        instruction.html("<p>Nobody was killed today.  There are currently " + remaining.total + " total remaining townspeople, including " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     }
 
     //Set button to "I'm Ready"
     voteButton.off('click');
     voteButton.text("I'm Ready");
     voteButton.prop('disabled', false);
+    voteButton.removeClass('disabled');
     //Prevent users from voting more than once.
 
 
@@ -440,6 +457,38 @@ function beginEvening(votedOut, votedRole, remaining) {
 
 function beginNight() {
     console.log('It is night, my dudes.  AHHHHH');
+
+    target = "";
+    //Replace Phase with Day, change instruction, and change Alert Color
+    phase.text(' - Night');
+    instruction.html("<p>The night will end after the mafia votes to kill a member of the the town.  Mafia members will click on a player's name to indicate their choice to the other mafia members.  The mafia members then press the submit button to vote for that person when they are ready.  The mafia wins if they outnumber the citizens.</p><p>The citizens can choose to ready up whenever they want.  Try not to look at who else is pressing buttons on their phone to get an unfair advantage.</p>");
+    gamePlayerList.removeClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
+
+    socket.emit('getUserStatuses', roomCode);
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
+    voteButton.text('Vote');
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
+
+    //Add the on click function for all users in the list group to select and target them
+    if(myRole === "mafia") {
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            target = $(this).text();
+            console.log('Target: ' + target);
+        });
+    } else {
+        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');
+    }
+
+
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
 }
 
 
