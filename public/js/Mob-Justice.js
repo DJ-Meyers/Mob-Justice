@@ -148,15 +148,11 @@ socket.on('removeUser', function(username) {
     removeUserFromGamePlayerList(username);
 });
 //When the server responds to the request to start the game
-socket.on('gameStarted', function(userStatuses) {
-    console.log("'gameStarted', " + userStatuses);
+socket.on('gameStarted', function() {
+    console.log("'gameStarted'");
     $('.badge-pill').remove();
 
-    $('.list-group-item').addClass('list-group-item-action');
-
-
-    //Change phase to day
-    beginDay(userStatuses);
+    beginInstructions();
 });
 
 
@@ -224,50 +220,116 @@ function reconnect(roomcode, username) {
 // Game Logic
 //----------------------------------------------------
 
+//Begin Instructions phase, so players understand the objective and their role
+function beginInstructions() {
+    //Hide player list
+    gamePlayerList.addClass('hidden');
+
+    //Set phase to Instructions, change alert color
+    phase.text(' - Roles & Instructions');
+    roomCodeTitle.removeClass('alert-info').addClass('alert-warning');
+    instruction.html("<p>Mob Justice is a game in which citizens must take their town back from the Mafia that has been killing them one by one.  Every day the citizens will meet and try to figure out who is a member of the mafia.  They will have to decide on one member of the town to be killed.  If the citizens successfully eliminate all the members of the Mafia, then their town is saved and they win the game.</p><p>However, the Mafia can blend into the daily meetings and get to voice their opinions on who should be killed.  Additionally, the Mafia will continue kill one citizen every night.  If all the citizens are killed, the Mafia rule the town and win the game.</p><p>Among the citizens are a doctor and a detective.  Each night, the doctor can save one person (including themselves) from being killed by the mafia; however, they cannot save the same person two nights in a row.  Every night, the detective can uncover the role of any other member of the town.  The Doctor and Detective should be wary about revealing their roles, as the Mafia may choose to target them.</p>");
+
+    //Set button to "I'm Ready"
+    voteButton.off('click');
+    voteButton.text("I'm Ready");
+    voteButton.prop('disabled', false);
+    //Prevent users from voting more than once.
+
+
+    // Get my role
+    socket.emit('getMyRole', roomCode, name);
+
+    socket.on('myRole', function(role, others) {
+        console.log('myRole: ' + role + ", others: " + others);
+        //Set instruction based on my role.
+        instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
+        if(role === "mafia") {
+
+            var othersString = "";
+            for(var i = 0; i < others.length; i++) {
+                if(i !== 0) {
+                    othersString += ", ";
+                }
+
+                othersString += others[i];
+            }
+
+            instruction.append("<p>The other mafia members are: " + othersString + "</p>");
+        }
+    });
+
+    voteButton.one('click', function() {
+        $('.list-group-item').addClass('list-group-item-action');
+
+
+        beginDay();
+    });
+
+    //Change phase to day
+    //beginDay();
+}
+
 //Begin Day phase of game
-function beginDay(userStatuses) {
+function beginDay() {
 
     //Replace Phase with Day, change instruction, and change Alert Color
     phase.text(' - Day');
     instruction.text("The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.");
-    roomCodeTitle.removeClass('alert-info').addClass('alert-success');
+    gamePlayerList.removeClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-success');
 
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.off('click');
     voteButton.text('Vote');
+    voteButton.addClass('disabled');
 
     //Add the on click function for all users in the list group to select and target them
     $('.list-group-item').click(function() {
         $('.active').removeClass('active');
+        voteButton.removeClass('disabled');
 
         $(this).addClass('active');
         target = $(this).text();
         console.log('Target: ' + target);
     });
 
-    //For each user, disable the their list group item if they're dead
-    $('.list-group-item').each(function() {
-        if(!isAlive($(this).text(), userStatuses)) {
-            $(this).addClass('disabled');
-            $(this).off('click');
+
+    socket.emit('getUserStatuses', roomCode);
+
+    socket.on('userStatuses', function(userStatuses) {
+        //For each user, disable the their list group item if they're dead
+        $('.list-group-item').each(function() {
+            if(!isAlive($(this).text(), userStatuses)) {
+                $(this).addClass('disabled');
+                $(this).off('click');
+            }
+        });
+
+        //If this person is alive, allow them to vote
+        if(isAlive(name, userStatuses)) {
+            voteButton.prop('disabled', false);
+            //Prevent users from voting more than once.
+            voteButton.on('click', function() {
+                console.log('Voting for ' + target);
+                $('.active').removeClass('active');
+                $('.list-group-item').addClass('disabled');
+
+                $('.list-group-item').off('click');
+
+                instruction.text('Your vote has been submitted.  Waiting on others.');
+
+                socket.emit('voteDay', roomCode, name, target);
+                voteButton.addClass('disabled');
+            });
         }
     });
 
-    //If this person is alive, allow them to vote
-    if(isAlive(name, userStatuses)) {
-        voteButton.prop('disabled', false);
-        //Prevent users from voting more than once.
-        voteButton.one('click', function() {
-            console.log('Voting for ' + target);
-            $('.active').removeClass('active');
-            $('.list-group-item').addClass('disabled');
+    socket.on('eliminated', function(votedOut) {
+        console.log(votedOut + " has been voted out.");
+    });
 
-            $('.list-group-item').off('click');
-
-            instruction.text('Your vote has been submitted.  Waiting on others.');
-
-            socket.emit('voteDay', roomCode, name, target);
-            voteButton.addClass('disabled');
-        });
-    }
+    socket.on('noElimination', function() {
+        console.log('No elimination.  Revote');
+    })
 }

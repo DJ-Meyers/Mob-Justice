@@ -5,6 +5,10 @@ html {
     min-height: 100%;
 }
 
+p > p {
+    text-align: left;
+}
+
 .long-content {
     padding-top: 68px;
     position: relative;
