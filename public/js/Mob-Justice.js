@@ -190,40 +190,6 @@ socket.on('settingUpRevoting', function(userStatuses){
         disable(voteButton);
         instruction.html("<p>Your vote has been submitted.  Please wait while the other players submit their votes.</p>");
     });
-    //For each user, disable the their list group item if they're dead
-    // $('.list-group-item').each(function() {
-    //     if(!isAlive($(this).text(), userStatuses)) {
-    //         $(this).addClass('disabled');
-    //         $(this).off('click');
-    //     }
-    //     else{
-    //         $(this).removeClass('disabled');
-    //         //$(this).off('click');
-    //     }
-    // });
-    //
-    // //If this person is alive, allow them to vote
-    // if(isAlive(name, userStatuses)) {
-    //     voteButton.prop('disabled', false);
-    //     //Prevent users from voting more than once.
-    //     voteButton.on('click', function() {
-    //         if(target) {
-    //             console.log('Voting for ' + target);
-    //             $('.active').removeClass('active');
-    //             $('.list-group-item').addClass('disabled');
-    //
-    //             $('.list-group-item').off('click');
-    //
-    //             instruction.text('Your vote has been submitted.  Waiting on others.');
-    //
-    //             socket.emit('voteDay', roomCode, name, target);
-    //             voteButton.addClass('disabled');
-    //             voteButton.prop('disabled', true);
-    //         } else {
-    //             console.log('Cannot vote for nobody.');
-    //         }
-    //     });
-    // }
 });
 socket.on('userStatuses', function(userStatuses) {
     console.log(userStatuses);
