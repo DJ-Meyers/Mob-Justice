@@ -260,7 +260,25 @@ io.on('connection', function(socket) {
 		}
 	});
 
+	socket.on('getEliminatedRole', function(roomCode, name) {
+		var room = findRoom(roomCode);
+		var user = findUser(room, name);
+		if(!user.alive) {
+			socket.emit('eliminatedRole', user.role);
+		}
+	});
 
+	socket.on('getRemainingRoles', function(roomCode) {
+		var room = findRoom(roomCode);
+		var remaining = {
+			citizens: room.remainingCitizens,
+			mafia: room.remainingMafia,
+			doctor: room.remainingDoctor,
+			detective: room.remainingDetective
+		};
+		console.log(remaining);
+		socket.emit('remainingRoles', remaining);
+	})
 
 });
 

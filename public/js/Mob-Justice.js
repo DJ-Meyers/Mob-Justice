@@ -30,7 +30,7 @@ var gameRoom			=	$('#gameRoom');
     var voteButton      =   $('#voteButton');
 
 //Variables used to enact game Logic
-var roomCode = "", name = "", target = " ",connected = false;
+var roomCode = "", name = "", target = "",connected = false, eliminatedRole="";
 
 
 //----------------------------------------------------
@@ -154,6 +154,7 @@ socket.on('gameStarted', function() {
 
     beginInstructions();
 });
+
 socket.on('myRole', function(role, others) {
     console.log('myRole: ' + role + ", others: " + others);
     //Set instruction based on my role.
@@ -207,10 +208,26 @@ socket.on('userStatuses', function(userStatuses) {
 
 socket.on('eliminated', function(votedOut) {
     console.log(votedOut + " has been voted out.");
+
+    //Day is over.  Begin Evening
+    beginEvening(votedOut);
 });
 
 socket.on('noElimination', function() {
     console.log('No elimination.  Revote');
+});
+
+//TODO Spencer replace these by emitting another thing when moving to evening.
+socket.on('eliminatedRole', function(role) {
+    console.log(role);
+    var eliminatedRole = role;
+});
+
+socket.on('remainingRoles', function(remaining) {
+    var remainingCitizens = remaining.citizens;
+    var remainingMafia = remaining.mafia;
+    var remainingDoctor = remaining.doctor;
+    var remainingDetective = remaining.detective;
 });
 
 //----------------------------------------------------
@@ -337,5 +354,36 @@ function beginDay() {
 
     $('li:contains("' + name + '")').off('click').addClass('disabled');
 
+}
 
+function beginEvening(votedOut) {
+    //Hide player list
+    gamePlayerList.addClass('hidden');
+    var remaining, eliminatedRole;
+    //Set phase to Instructions, change alert color
+    phase.text(' - Evening');
+    roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
+    socket.emit('getRemainingRoles', roomCode);
+    if(votedOut) {
+        // Get my role
+        socket.emit('getEliminatedRole', roomCode, name);
+        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + eliminatedRole + ".  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+    } else {
+        instruction.html("<p>Nobody was killed today.  There are " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+    }
+
+    //Set button to "I'm Ready"
+    voteButton.off('click');
+    voteButton.text("I'm Ready");
+    voteButton.prop('disabled', false);
+    //Prevent users from voting more than once.
+
+
+    voteButton.one('click', function() {
+
+        beginNight();
+    });
+
+    //Change phase to day
+    //beginDay();
 }
