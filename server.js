@@ -290,6 +290,13 @@ io.on('connection', function(socket) {
 		}
 	});
 
+	//this is for when revoting, it deals with server side stuff
+	socket.on('serverRevoting', function(roomCode){
+		var room = findRoom(roomCode);
+		var userStatuses = getUserStatuses(room);
+
+		socket.emit('settingUpRevoting', userStatuses);
+	});
 
 	socket.on('getEliminatedRole', function(roomCode, name) {
 		var room = findRoom(roomCode);
