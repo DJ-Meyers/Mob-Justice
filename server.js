@@ -208,6 +208,7 @@ io.on('connection', function(socket) {
 			socketID: socket.id,
 			socket: socket
 		}
+		// console.log(user);
 
 		//Add the room to activeRooms
 		var users = [user];
@@ -469,20 +470,37 @@ io.on('connection', function(socket) {
 			//if so, send to game over mafia win
 			//if not, send to start morning
 	});
-	socket.on('IsMafia', function(roomCode) {
-		var room = findRoom(room);
+
+	socket.on('getIsMafia', function(roomCode) {
+		var room = findRoom(roomCode);
 		if(findUserBySocket(room,socket).role==='mafia')
-			socket.emit('returnIsMafia', true);
+			socket.emit('isMafia', true);
 		else
-			socket.emit('returnIsMafia', false);
+			socket.emit('isMafia', false);
 	});
+
+	socket.on('updateOtherMafia', function(roomCode, target) {
+		// console.log('updating mafia in',roomCode,'that',target,'was targeted');
+		var room = findRoom(roomCode);
+		for(var i = 0; i < room.users.length; i++) {
+			// console.log(room.users[i].socketID);
+			if(ifMafia(roomCode, room.users[i].socketID)) {
+				console.log('sending ' + room.users[i].name + ' ' + target);
+				// socket.to(roomCode).emit('mafiaVotedFor', target);
+				socket.broadcast.to(room.users[i].socketID).emit('mafiaVotedFor', target);
+			}
+		}
+	});
+
 	socket.on('IsDoctor', function(roomCode) {
+		var room = findRoom(roomCode);
 		if(findUserBySocket(room,socket).role==='doctor')
 			socket.emit('returnIsDoctor', true);
 		else
 			socket.emit('returnIsDoctor', false);
 	});
 	socket.on('IsDetective', function(roomCode) {
+		var room = findRoom(roomCode);
 		if(findUserBySocket(room,socket).role==='detective')
 			socket.emit('returnIsDetective', true);
 		else
@@ -512,6 +530,12 @@ io.on('connection', function(socket) {
 //----------------------------------------------------
 // General Helpers
 //----------------------------------------------------
+
+function getUsersInRoom(roomCode) {
+	var room = findRoom(roomCode);
+	return room.users;
+}
+
 function findRoom(code) {
 	// console.log('Finding room ' + code)
 	for(var i = 0; i < activeRooms.length; i++) {
@@ -524,11 +548,12 @@ function findRoom(code) {
 	//return false;
 	console.log("could not find room");
 }
-function findUserBySocket(room,socketID){
+function findUserBySocket(room,socket){
 	for(var k = 0; k < room.users.length; ++k){
-		console.log("Iterating through users to find socket");
-		if(socketID===room.users[k].socket.id){
-			console.log("found user "+room.users[k].name);
+		// console.log("Iterating through users to find socket");
+		// console.log('Does socketID:',socketID.id,'match',room.users[k].name,'socketID',room.users[k].socketID,'?');
+		if(socket.id===room.users[k].socketID){
+			// console.log("found user "+room.users[k].name);
 			return room.users[k];
 		}
 	}
@@ -564,10 +589,10 @@ function addUserToRoom(code, username, socket) {
 		}
 	}
 }
-function ifMafia(code,socket){
+function ifMafia(code,socketID){
 	var room = findRoom(code);
-	for(var i = 0; i<room.users.length;++i){
-		if(room.users[i].socketID===socket.id){
+	for(var i = 0; i< room.users.length;++i){
+		if(room.users[i].socketID===socketID){
 			if(room.users[i].role==="mafia"){
 				return true;
 			}
