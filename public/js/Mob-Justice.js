@@ -228,7 +228,7 @@ socket.on('mafiaVote', function(listOfMafia) {
 
 });
 socket.on('nonMafiaVote', function() {
-    //call show function
+    //call show function (basically a no vote)
     //emit ready for doctor voting
     socket.emit('requestDocNightRole', roomCode);
 
@@ -260,7 +260,18 @@ socket.on('startNewDay', function() {
 socket.on('mafiaWins', function() {
     console.log('mafia wins');
 });
+socket.on('returnIsMafia', function(isMafia) {
 
+});
+socket.on('returnIsDoctor', function(isDoctor) {
+
+});
+socket.on('returnIsDetective', function(isDetective) {
+
+});
+socket.on('returnIsCitizen', function(isCitizen) {
+
+});
 // socket.on('remainingRoles', function(remaining) {
 //     var remainingCitizens = remaining.citizens;
 //     var remainingMafia = remaining.mafia;
