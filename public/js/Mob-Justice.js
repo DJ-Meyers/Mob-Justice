@@ -221,33 +221,43 @@ socket.on('eliminatedRole', function(role) {
     console.log(role);
     var eliminatedRole = role;
 });
-socket.on('mafiaVote', function(role) {
+socket.on('mafiaVote', function(listOfMafia) {
     //show voting for mafia
-    //emit ready for morning
+    //emit ready for doctor
+    socket.emit('requestDocNightRole', roomCode);
+
 });
-socket.on('nonMafiaVote', function(role) {
+socket.on('nonMafiaVote', function() {
     //call show function
     //emit ready for doctor voting
+    socket.emit('requestDocNightRole', roomCode);
+
 });
-socket.on('docVote', function(role) {
+socket.on('docVote', function() {
     //show voting for doc
     //emit ready for detective voting
+    socket.emit('requestDetNightRole', roomCode);
+
 });
-socket.on('nonDocVote', function(role) {
+socket.on('nonDocVote', function() {
     //call show function
     //emit ready for detective voting
+    socket.emit('requestDetNightRole', roomCode);
 });
-socket.on('detVote', function(role) {
+socket.on('detVote', function() {
     //show voting for detective
     //emit ready for morning
+    socket.emit('readyForMorning', roomCode);
 });
-socket.on('nonDetVote', function(role) {
+socket.on('nonDetVote', function() {
     //call show function
     //emit ready for morning
+    socket.emit('readyForMorning', roomCode);
 });
-socket.on('startNewDay', function(role) {
+socket.on('startNewDay', function() {
+
 });
-socket.on('mafiaWins', function(role) {
+socket.on('mafiaWins', function() {
     console.log('mafia wins');
 });
 
