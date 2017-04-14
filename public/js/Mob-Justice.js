@@ -497,12 +497,14 @@ function beginNight() {
     roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
     socket.emit('getUserStatuses', roomCode);
+    // socket.emit('isMaf')
 
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.off('click');
     voteButton.text('Vote');
     voteButton.addClass('disabled');
     voteButton.prop('disabled', true);
+
 
     //Add the on click function for all users in the list group to select and target them
     if(myRole === "mafia") {
@@ -515,7 +517,7 @@ function beginNight() {
             console.log('Target: ' + target);
         });
     } else {
-        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');
+        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');ip
     }
 
 
