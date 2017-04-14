@@ -209,7 +209,12 @@ socket.on('revoting', function() {
         console.log('No elimination.  Revote');
         revoteDay();
 });
-
+socket.on('mafiaWon', function( teamMembers,votedOut, votedRole) {
+    showMafiaWon(teamMembers ,votedOut, votedRole);
+});
+socket.on('citizensWon', function( teamMembers,votedOut, votedRole) {
+    showCitizensWon(teamMembers ,votedOut, votedRole);
+});
 socket.on('gameOver', function(winningTeam, teamMembers) {
         //TODO spencer, maybe look at server and check there
         console.log(winningTeam+' won with players: '+teamMembers);
@@ -458,6 +463,68 @@ function beginDay() {
     //
     // $('li:contains("' + name + '")').off('click').addClass('disabled');
 
+}
+
+function showCitizensWon(teamMems,votedOut, votedRole) {
+    //Hide player list
+    gamePlayerList.addClass('hidden');
+    var remaining, eliminatedRole;
+    //Set phase to Instructions, change alert color
+    phase.text(' - Citizens Win! Game Over!');
+    roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
+    // socket.emit('getRemainingRoles', roomCode);
+    if(votedOut) {
+        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + votedRole + ". There are no more mafia left, and the Citizens have won. Congratulations to the Citizens team!");
+    } else {
+        instruction.html("<p>Nobody was killed today, but there are no mafia left, Citizens win!");
+      }
+
+    //Set button to "I'm Ready"
+    voteButton.off('click');
+    voteButton.text("I'm Ready");
+    voteButton.prop('disabled', false);
+    voteButton.removeClass('disabled');
+    //Prevent users from voting more than once.
+
+
+    voteButton.one('click', function() {
+
+        beginNight();
+    });
+
+    //Change phase to day
+    //beginDay();
+}
+
+function showMafiaWon(teamMems,votedOut, votedRole) {
+    //Hide player list
+    gamePlayerList.addClass('hidden');
+    var remaining, eliminatedRole;
+    //Set phase to Instructions, change alert color
+    phase.text(' - Mafia Win! Game Over!');
+    roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
+    // socket.emit('getRemainingRoles', roomCode);
+    if(votedOut) {
+        instruction.html("<p>You killed <strong>" + votedOut + "</strong> who was a " + votedRole + ". There are no more citzens left, and the Mafia have won. Congratulations to the mafia team!");
+    } else {
+        instruction.html("<p>Nobody was killed today, but there are no citizens left, mafia win!");
+      }
+
+    //Set button to "I'm Ready"
+    voteButton.off('click');
+    voteButton.text("I'm Ready");
+    voteButton.prop('disabled', false);
+    voteButton.removeClass('disabled');
+    //Prevent users from voting more than once.
+
+
+    voteButton.one('click', function() {
+
+        beginNight();
+    });
+
+    //Change phase to day
+    //beginDay();
 }
 
 function beginEvening(votedOut, votedRole, remaining) {
