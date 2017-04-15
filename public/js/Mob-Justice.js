@@ -212,25 +212,6 @@ socket.on('revoting', function() {
 socket.on('mafiaWon', function( teamMembers,votedOut, votedRole) {
     showMafiaWon(teamMembers ,votedOut, votedRole);
 });
-
-socket.on('mafiaVotedFor', function(target) {
-    console.log('Another mafia member voted for',target);
-    var targetedPlayer = $('li:contains("' + target + '")');
-    // console.log(targetedPlayer);
-
-    var badge = targetedPlayer.has('.badge');
-    console.log(badge.length);
-    if(badge.length){
-        badge.val(badge.val() + 1);
-    } else {
-        console.log('trying to create badge');
-        badge = document.createElement('span');
-        badge.classList.add('badge', 'badge-pill', 'badge-default');
-        badge.innerHTML = 0;
-        targetedPlayer.append(badge);
-    }
-});
-
 socket.on('citizensWon', function( teamMembers,votedOut, votedRole) {
     showCitizensWon(teamMembers ,votedOut, votedRole);
 });
@@ -278,26 +259,15 @@ socket.on('nonDetVote', function() {
     //emit ready for morning
     socket.emit('readyForMorning', roomCode);
 });
-
 socket.on('startNewDay', function() {
 
 });
-
 socket.on('mafiaWins', function() {
     console.log('mafia wins');
 });
+socket.on('returnIsMafia', function(isMafia) {
 
-//Since getUserStatuses already accounted for disabling oneself and the dead,
-//We only need to worry about disabling non-Mafia from voting
-socket.on('isMafia', function(isMafia) {
-    if(!isMafia) {
-        console.log("No they ain't");
-        disableAll();
-    } else {
-        console.log("Yes they is");
-    }
 });
-
 socket.on('returnIsDoctor', function(isDoctor) {
 
 });
@@ -356,7 +326,7 @@ function resetVoting(userStatuses) {
 }
 
 function disableDead(userStatuses) {
-    //console.log($('.list-group-item'));
+    console.log($('.list-group-item'));
     $('.list-group-item').each(function() {
         $(this).removeClass('active');
         if(isAlive($(this).text(), userStatuses)) {
@@ -366,13 +336,6 @@ function disableDead(userStatuses) {
             console.log('disabling: ' + $(this));
             disable($(this));
         }
-    });
-}
-
-function disableAll() {
-    $('.list-group-item').each(function() {
-        $(this).removeClass('active');
-        disable($(this));
     });
 }
 
@@ -394,14 +357,6 @@ function isAlive(name, userStatuses) {
         }
     }
     return false;
-}
-
-function updateOtherMafia(roomCode) {
-    $('.list-group-item').click(function() {
-        var target = $(this).text();
-        console.log('telling other mafia you picked',target);
-        socket.emit('updateOtherMafia', roomCode, target);
-    });
 }
 
 function disable(jQueryItem) {
@@ -619,16 +574,30 @@ function beginNight() {
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
-    updateOtherMafia(roomCode);
     socket.emit('getUserStatuses', roomCode);
-    socket.emit('getIsMafia', roomCode);
-    console.log('is', name, 'mafia?');
 
     //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
     voteButton.text('Vote');
-    disable(voteButton);
-    disableMe();
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
 
+    //Add the on click function for all users in the list group to select and target them
+    if(myRole === "mafia") {
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            target = $(this).text();
+            console.log('Target: ' + target);
+        });
+    } else {
+        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');
+    }
+
+
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
     //spencer
     //send me mafia night role
 }

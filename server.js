@@ -1,4 +1,4 @@
-/*
+getOtherMafia/*
  * Server.js
  *
  * The main portion of this project. Contains all the defined routes for express,
@@ -46,6 +46,8 @@ server.listen(conf.PORT, conf.HOST, () => {
 // Socket stuff
 //----------------------------------------------------
 io.on('connection', function(socket) {
+	var socketRoomCode = 0;
+	var socketUserName = 'notInitialized';
 	//TODO join
 	//TODO add descriptive comment
 	socket.on('disconnect', function () {
@@ -93,38 +95,10 @@ io.on('connection', function(socket) {
 		}
 
     });
-//TODO add descriptive stuff
-	function checkIfDisc(roomCode, username){
-		for(var u = 0; u < disconnect.length; ++u){
-			if(disconnect[u].room===roomCode){
-				console.log("here at disconnect");
-				for(var j = 0; j < disconnect[u].names.length; ++j){
-					console.log("name "+disconnect[u].names[j]);
-					if(username===disconnect[u].names[j]) {
-						disconnect[u].names.splice(j,0);
-						console.log("did real shit");
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	};
-	function checkIfExists(roomCode, username){
 
-		//todo move this to new function so shit can happen
-			//console.log(hashstuff);
-			for(var i = 0; i < hashstuff.length;++i){
-
-				if(username===hashstuff[i].name&&roomCode===hashstuff[i].room){
-					console.log("found something");
-					return false;
-				}
-			}
-		return true;
-	};
 	socket.on('join', function(roomCode, username) {
 		// console.log(socket.id);
+
 		var disc = checkIfDisc(roomCode,username);
 		var check = checkIfExists(roomCode,username);
 		if(disc){
@@ -139,7 +113,8 @@ io.on('connection', function(socket) {
 
 			hashstuff.push(socketId);
 			socket.emit('successJoin');
-
+			socketRoomCode = roomCode;
+			socketUserName = username;
 		}
 		else if(check){
 		var room = findRoom(roomCode);
@@ -162,7 +137,8 @@ io.on('connection', function(socket) {
 
 				//Let this user know they successfully joined
 				socket.emit('successJoin');
-
+				socketRoomCode = roomCode;
+				socketUserName = username;
 				console.log(roomCode + ': ' + username + ' has connected.');
 		}}
 		else{
@@ -222,7 +198,8 @@ io.on('connection', function(socket) {
 
 		//Send the newUser message to clients that are listening on roomCode
 
-
+		socketRoomCode = roomCode;
+		socketUserName = username;
 		socket.emit('newUser', username);
 
 	});
@@ -230,6 +207,7 @@ io.on('connection', function(socket) {
 	//Start a game
 	socket.on('startGame', function(roomCode) {
 		// console.log('Starting Game: ' + roomCode);
+		console.log(socketUserName+" is starting the game");
 		var room = findRoom(roomCode);
 		// console.log(room);
 		room.started = true;
@@ -530,7 +508,78 @@ io.on('connection', function(socket) {
 //----------------------------------------------------
 // General Helpers
 //----------------------------------------------------
+function ifMafia(code,socketID){
+	var room = findRoom(code);
+	for(var i = 0; i< room.users.length;++i){
+		if(room.users[i].socketID===socketID){
+			if(room.users[i].role==="mafia"){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+	}
 
+}
+function ifDoctor(code,socket){
+	var room = findRoom(code);
+	for(var i = 0; i<room.users.length;++i){
+		if(room.users[i].socketID===socket.id){
+			if(room.users[i].role==="doctor"){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+	}
+
+}
+function ifDetective(code,socket){
+	var room = findRoom(code);
+	for(var i = 0; i<room.users.length;++i){
+		if(room.users[i].socketID===socket.id){
+			if(room.users[i].role==="detective"){
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+	}
+
+}
+//TODO add descriptive stuff
+	function checkIfDisc(roomCode, username){
+		for(var u = 0; u < disconnect.length; ++u){
+			if(disconnect[u].room===roomCode){
+				console.log("here at disconnect");
+				for(var j = 0; j < disconnect[u].names.length; ++j){
+					console.log("name "+disconnect[u].names[j]);
+					if(username===disconnect[u].names[j]) {
+						disconnect[u].names.splice(j,0);
+						console.log("did real shit");
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	};
+	function checkIfExists(roomCode, username){
+
+		//todo move this to new function so shit can happen
+			//console.log(hashstuff);
+			for(var i = 0; i < hashstuff.length;++i){
+
+				if(username===hashstuff[i].name&&roomCode===hashstuff[i].room){
+					console.log("found something");
+					return false;
+				}
+			}
+		return true;
+	};
 function getUsersInRoom(roomCode) {
 	var room = findRoom(roomCode);
 	return room.users;
@@ -589,48 +638,7 @@ function addUserToRoom(code, username, socket) {
 		}
 	}
 }
-function ifMafia(code,socketID){
-	var room = findRoom(code);
-	for(var i = 0; i< room.users.length;++i){
-		if(room.users[i].socketID===socketID){
-			if(room.users[i].role==="mafia"){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}
-	}
 
-}
-function ifDoctor(code,socket){
-	var room = findRoom(code);
-	for(var i = 0; i<room.users.length;++i){
-		if(room.users[i].socketID===socket.id){
-			if(room.users[i].role==="doctor"){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}
-	}
-
-}
-function ifDetective(code,socket){
-	var room = findRoom(code);
-	for(var i = 0; i<room.users.length;++i){
-		if(room.users[i].socketID===socket.id){
-			if(room.users[i].role==="detective"){
-				return true;
-			}
-			else{
-				return false;
-			}
-		}
-	}
-
-}
 function assignRoles(room) {
 	//<=7 players  -> 2 mafia
 	//<=10 players -> 3 mafia
@@ -728,14 +736,33 @@ function getName(roomCode, socket){
 function getOtherMafia(room, name) {
 	var others = [];
 	for(var i = 0; i < room.users.length; i++) {
-		if(room.users[i].role === "mafia" && room.users[i].name !== name) {
+		if(room.users[i].role === "mafia") {
 			others.push(room.users[i].name);
 		}
 	}
 
 	return others;
 }
+function getMafia(room, name) {
+	var others = [];
+	for(var i = 0; i < room.users.length; i++) {
+		if(room.users[i].role === "mafia") {
+			others.push(room.users[i].name);
+		}
+	}
 
+	return others;
+}
+function getCitizens(room, name) {
+	var others = [];
+	for(var i = 0; i < room.users.length; i++) {
+		if(room.users[i].role !== "mafia") {
+			others.push(room.users[i].name);
+		}
+	}
+
+	return others;
+}
 //Get alive/dead status of each user
 function getUserStatuses (room) {
 	var userStatuses = [];
