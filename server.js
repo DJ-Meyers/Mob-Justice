@@ -25,7 +25,7 @@ var readyMafiaCount = 0;
 var readyDocCount = 0;
 var readyDetCount = 0;
 // Helper functions
-
+var discArray = [];
 //----------------------------------------------------
 // Initialize App
 //----------------------------------------------------
@@ -48,6 +48,7 @@ server.listen(conf.PORT, conf.HOST, () => {
 io.on('connection', function(socket) {
 	var socketRoomCode = 0;
 	var socketUserName = 'notInitialized';
+	var socketRoom = 0;
 	//TODO join
 	//TODO add descriptive comment
 	socket.on('disconnect', function () {
@@ -89,8 +90,7 @@ io.on('connection', function(socket) {
 				room.totalRemaining--;
 				console.log("trying to remove "+hashstuff[j].name);
 				socket.broadcast.emit('removeUser', hashstuff[j].name);
-				hashstuff.splice(j,0);
-
+				//remove from the room
 			}
 		}
 
@@ -104,41 +104,28 @@ io.on('connection', function(socket) {
 		if(disc){
 			console.log("reconnecting a user: "+ username);
 			socket.join(roomCode);
-			var socketId = {
-				room: roomCode,
-				name: username,
-				id: socket.id
-			}
 			socket.broadcast.emit('newUser', username);
-
-			hashstuff.push(socketId);
 			socket.emit('successJoin');
 			socketRoomCode = roomCode;
 			socketUserName = username;
+			socketRoom = findRoom(roomCode);
+			//TODO add user to room
 		}
 		else if(check){
 		var room = findRoom(roomCode);
 	    if(!room) {
 			console.log("Room " + roomCode + " doesn't exist.");
 		} else {//if you found a legit room, it lets you join
-			var socketId = {
-				room: roomCode,
-				name: username,
-				id: socket.id
-			}
-			hashstuff.push(socketId);
 			//TODO shouldnt join an already started room unless you are in it
 				socket.join(roomCode);
 				addUserToRoom(roomCode,username,socket);//calls function that adds to room
-				var host = false;
-
 				//Let other users know that I joined
 				socket.broadcast.to(roomCode).emit('newUser', username);
-
 				//Let this user know they successfully joined
 				socket.emit('successJoin');
 				socketRoomCode = roomCode;
 				socketUserName = username;
+				socketRoom = findRoom(roomCode);
 				console.log(roomCode + ': ' + username + ' has connected.');
 		}}
 		else{
@@ -621,6 +608,21 @@ function findUser(room, name) {
 //----------------------------------------------------
 // Initialization helpers
 //----------------------------------------------------
+function removeUserFromRoom(room, username, socket) {
+	//goes through, finds room, makes a user, and adds it to room's userlist
+	console.log("Trying to disconnect "+username+" from roomcode: "+room.roomcode);
+			var user = {
+					name: username,
+					alive: true,
+					role: "citizen",
+					voted: false,
+					socketID: socket,
+					socket: socket
+					}
+			activeRooms[i].users.push(user);
+		}
+	}
+}
 function addUserToRoom(code, username, socket) {
 	//goes through, finds room, makes a user, and adds it to room's userlist
 	for(var i = 0; i < activeRooms.length; i++) {
@@ -631,7 +633,7 @@ function addUserToRoom(code, username, socket) {
 					alive: true,
 					role: "citizen",
 					voted: false,
-					socketID: socket.id,
+					socketID: socket,
 					socket: socket
 					}
 			activeRooms[i].users.push(user);
