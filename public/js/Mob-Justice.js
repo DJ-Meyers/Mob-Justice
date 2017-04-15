@@ -65,7 +65,7 @@ createSubmit.click(function() {
     voteButton.text('Start Game');
     voteButton.click(function() {
         console.log('sending startGame');
-        socket.emit('startGame', roomCode);
+        socket.emit('startGame');
 
     });
 });
@@ -135,7 +135,7 @@ socket.on('successJoin', function(username, host) {
     gameRoom.addClass('long-content').removeClass('hidden');
 
     //moved this part up here so it joins you to room before printing out people in room
-    socket.emit('getUsers',roomCode,name)
+    socket.emit('getUsers')
     roomCodeSpan.text(roomCode);
 
     voteButton.prop("disabled", true);
@@ -189,7 +189,7 @@ socket.on('settingUpRevoting', function(userStatuses){
     voteButton.text('Vote');
     disable(voteButton);
     voteButton.one('click', function() {
-        socket.emit('voteDay', roomCode, name, target);
+        socket.emit('voteDay',target);
         disable(voteButton);
         instruction.html("<p>Your vote has been submitted.  Please wait while the other players submit their votes.</p>");
     });
@@ -232,35 +232,35 @@ socket.on('eliminatedRole', function(role) {
 socket.on('mafiaVote', function(listOfMafia) {
     //show voting for mafia
     //emit ready for doctor
-    socket.emit('requestDocNightRole', roomCode);
+    socket.emit('requestDocNightRole');
 
 });
 socket.on('nonMafiaVote', function() {
     //call show function (basically a no vote)
     //emit ready for doctor voting
-    socket.emit('requestDocNightRole', roomCode);
+    socket.emit('requestDocNightRole');
 
 });
 socket.on('docVote', function() {
     //show voting for doc
     //emit ready for detective voting
-    socket.emit('requestDetNightRole', roomCode);
+    socket.emit('requestDetNightRole');
 
 });
 socket.on('nonDocVote', function() {
     //call show function
     //emit ready for detective voting
-    socket.emit('requestDetNightRole', roomCode);
+    socket.emit('requestDetNightRole');
 });
 socket.on('detVote', function() {
     //show voting for detective
     //emit ready for morning
-    socket.emit('readyForMorning', roomCode);
+    socket.emit('readyForMorning');
 });
 socket.on('nonDetVote', function() {
     //call show function
     //emit ready for morning
-    socket.emit('readyForMorning', roomCode);
+    socket.emit('readyForMorning');
 });
 socket.on('startNewDay', function() {
 
@@ -423,7 +423,7 @@ function beginInstructions() {
 
 
     // Get my role
-    socket.emit('getMyRole', roomCode, name);
+    socket.emit('getMyRole');
     voteButton.one('click', function() {
         $('.list-group-item').addClass('list-group-item-action');
 
@@ -443,7 +443,7 @@ function beginDay() {
     roomCodeTitle.removeClass('alert-warning').addClass('alert-success');
 
 
-    socket.emit('getUserStatuses', roomCode);
+    socket.emit('getUserStatuses');
 
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.text('Vote');
@@ -577,7 +577,7 @@ function beginNight() {
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
-    socket.emit('getUserStatuses', roomCode);
+    socket.emit('getUserStatuses');
 
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.off('click');
@@ -607,5 +607,5 @@ function beginNight() {
 
 
 function revoteDay() {
-    socket.emit('serverRevoting', roomCode);
+    socket.emit('serverRevoting');
 }
