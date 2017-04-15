@@ -88,9 +88,12 @@ socket.on('newUser', function(username) {
     //console.log(name+" and username: "+username);
     //if(host===true || name!==username){
         addUserToGamePlayerList(username);
+        socket.emit('sizeOfRoom');
     //}
 });
-
+socket.on('sizeOfRoom', function(size){
+    console.log("log of room is now "+size);
+});
 socket.on('failedToCreate', function() {
     console.log('failedToCreate');
     //$('#joinDiv').find('form')[0].reset();

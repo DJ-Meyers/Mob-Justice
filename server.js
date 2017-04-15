@@ -48,7 +48,7 @@ server.listen(conf.PORT, conf.HOST, () => {
 io.on('connection', function(socket) {
 	var socketRoomCode = 0;
 	var socketUserName = 'notInitialized';
-	var socketRoom = 0;
+	var socketRoom;
 	//TODO join
 	//TODO add descriptive comment
 	socket.on('disconnect', function () {
@@ -104,12 +104,13 @@ io.on('connection', function(socket) {
 		if(disc){
 			console.log("reconnecting a user: "+ username);
 			socket.join(roomCode);
-			socket.broadcast.emit('newUser', username);
-			socket.emit('successJoin');
 			socketRoomCode = roomCode;
 			socketUserName = username;
 			socketRoom = findRoom(roomCode);
-			//TODO add user to room
+			addUserToRoom(socketRoom,socketUserName,socket);//calls function that adds to room
+
+			socket.broadcast.emit('newUser', username);
+			socket.emit('successJoin');
 		}
 		else if(check){
 		var room = findRoom(roomCode);
@@ -118,14 +119,16 @@ io.on('connection', function(socket) {
 		} else {//if you found a legit room, it lets you join
 			//TODO shouldnt join an already started room unless you are in it
 				socket.join(roomCode);
-				addUserToRoom(roomCode,username,socket);//calls function that adds to room
+				socketRoomCode = roomCode;
+				socketUserName = username;
+				socketRoom = findRoom(roomCode);
+				addUserToRoom(socketRoom,socketUserName,socket);//calls function that adds to room
+
+				console.log("the size of room is "+socketRoom.users.length);
 				//Let other users know that I joined
 				socket.broadcast.to(roomCode).emit('newUser', username);
 				//Let this user know they successfully joined
 				socket.emit('successJoin');
-				socketRoomCode = roomCode;
-				socketUserName = username;
-				socketRoom = findRoom(roomCode);
 				console.log(roomCode + ': ' + username + ' has connected.');
 		}}
 		else{
@@ -138,10 +141,15 @@ io.on('connection', function(socket) {
 	//Get users currently in the room
 	socket.on('getUsers', function(roomCode, username) {
 		//TODO prevent this from breaking when a user enters an invalid room code
+
 		var room = findRoom(roomCode);
 		var names = [];
+
 		//console.log(room);
+		console.log("in GetUsers, array of users list is "+room.users);
+		console.log("in GetUsers, length of users list is "+room.users.length);
 		for(var u = 0; u < room.users.length; u++) {
+			console.log("in iteration "+u+", tryign to find name of "+room.users[u].name);
 			var thisName = room.users[u].name;
 			names.push(thisName);
 		}
@@ -153,44 +161,34 @@ io.on('connection', function(socket) {
 
 		//Connect to the room (Creates a new room, assuming a room with this code doesn't exist.  That should VERY rarely happen.  1/26^4)
 		socket.join(roomCode);
-
+		socketRoomCode = roomCode;
+		socketUserName = username;
 		console.log(roomCode + ': ' + username + ' has connected.');
-		var socketId = {
-				room: roomCode,
-				name: username,
-				id: socket.id
-		}
-		hashstuff.push(socketId);
 		//Declare this user
-		hostID = socket;
-		var user = {
-			name: username,
-			alive: true,
-			role: "citizen",
-			voted: false,
-			socketID: socket.id,
-			socket: socket
-		}
 		// console.log(user);
 
 		//Add the room to activeRooms
-		var users = [user];
+		var users = [];
 		var room = {
 			roomCode: roomCode,
 			users: users,
 			started: false,
 			votes: []
 		};
+		console.log("before setting Socket Room equal to room, it looks like :"+ room.roomCode);
+
+		socketRoom = room;
 		activeRooms.push(room);
-
+		console.log("before pushing room to Add function, it looks like :"+ socketRoom.roomCode);
+		var users = addUserToRoom(room,socketUserName,socket);
+		console.log("the size of room is "+socketRoom.users.length);
 		//Send the newUser message to clients that are listening on roomCode
-
-		socketRoomCode = roomCode;
-		socketUserName = username;
 		socket.emit('newUser', username);
 
 	});
-
+	socket.on('sizeOfRoom', function() {
+		io.to(socketRoomCode).emit('sizeOfRoom', socketRoom.users.length);
+	});
 	//Start a game
 	socket.on('startGame', function(roomCode) {
 		// console.log('Starting Game: ' + roomCode);
@@ -538,35 +536,35 @@ function ifDetective(code,socket){
 
 }
 //TODO add descriptive stuff
-	function checkIfDisc(roomCode, username){
-		for(var u = 0; u < disconnect.length; ++u){
-			if(disconnect[u].room===roomCode){
-				console.log("here at disconnect");
-				for(var j = 0; j < disconnect[u].names.length; ++j){
-					console.log("name "+disconnect[u].names[j]);
-					if(username===disconnect[u].names[j]) {
-						disconnect[u].names.splice(j,0);
-						console.log("did real shit");
-						return true;
-					}
+function checkIfDisc(roomCode, username){
+	for(var u = 0; u < disconnect.length; ++u){
+		if(disconnect[u].room===roomCode){
+			console.log("here at disconnect");
+			for(var j = 0; j < disconnect[u].names.length; ++j){
+				console.log("name "+disconnect[u].names[j]);
+				if(username===disconnect[u].names[j]) {
+					disconnect[u].names.splice(j,0);
+					console.log("did real shit");
+					return true;
 				}
 			}
 		}
-		return false;
-	};
-	function checkIfExists(roomCode, username){
+	}
+	return false;
+};
+function checkIfExists(roomCode, username){
 
-		//todo move this to new function so shit can happen
-			//console.log(hashstuff);
-			for(var i = 0; i < hashstuff.length;++i){
+	//todo move this to new function so shit can happen
+		//console.log(hashstuff);
+		for(var i = 0; i < hashstuff.length;++i){
 
-				if(username===hashstuff[i].name&&roomCode===hashstuff[i].room){
-					console.log("found something");
-					return false;
-				}
+			if(username===hashstuff[i].name&&roomCode===hashstuff[i].room){
+				console.log("found something");
+				return false;
 			}
-		return true;
-	};
+		}
+	return true;
+};
 function getUsersInRoom(roomCode) {
 	var room = findRoom(roomCode);
 	return room.users;
@@ -616,29 +614,27 @@ function removeUserFromRoom(room, username, socket) {
 					alive: true,
 					role: "citizen",
 					voted: false,
-					socketID: socket,
+					socketID: socket.id,
 					socket: socket
 					}
-			activeRooms[i].users.push(user);
-		}
-	}
+			room.users.push(user);
 }
-function addUserToRoom(code, username, socket) {
+function addUserToRoom(room, username, socket) {
 	//goes through, finds room, makes a user, and adds it to room's userlist
-	for(var i = 0; i < activeRooms.length; i++) {
-		if(activeRooms[i].roomCode === code) {
-			console.log("if this is ever called, someone messed up");
-			var user = {
-					name: username,
-					alive: true,
-					role: "citizen",
-					voted: false,
-					socketID: socket,
-					socket: socket
-					}
-			activeRooms[i].users.push(user);
-		}
+	console.log("adding user to room, the room looks like:" + room.users);
+	room.users.push(createUser(username,socket));
+	console.log("added user to room, the room now looks like:" + room.users);
+}
+function createUser(username, socket){
+	var user = {
+		name: username,
+		alive: true,
+		role: "citizen",
+		voted: false,
+		socketID: socket.id,
+		socket: socket
 	}
+	return user;
 }
 
 function assignRoles(room) {
