@@ -31,7 +31,7 @@ var gameRoom			=	$('#gameRoom');
 
 //Variables used to enact game Logic
 var roomCode = "", name = "", target = "",connected = false, eliminatedRole="", votingTime=1, myRole="";
-
+var nightTarget = "";
 
 
 //----------------------------------------------------
@@ -215,8 +215,8 @@ socket.on('revoting', function() {
 socket.on('mafiaWon', function( teamMembers,votedOut, votedRole) {
     showMafiaWon(teamMembers ,votedOut, votedRole);
 });
-socket.on('citizensWon', function( teamMembers,votedOut, votedRole) {
-    showCitizensWon(teamMembers ,votedOut, votedRole);
+socket.on('citizensWon', function(votedOut) {
+    showCitizensWon('' ,votedOut, '');
 });
 socket.on('gameOver', function(winningTeam, teamMembers) {
         //TODO spencer, maybe look at server and check there
@@ -232,41 +232,62 @@ socket.on('eliminatedRole', function(role) {
 socket.on('mafiaVote', function(listOfMafia) {
     //show voting for mafia
     //emit ready for doctor
-    socket.emit('requestDocNightRole');
-
+    beginNightForMafia();
 });
-socket.on('nonMafiaVote', function() {
-    //call show function (basically a no vote)
-    //emit ready for doctor voting
-    socket.emit('requestDocNightRole');
-
-});
+// socket.on('nonMafiaVote', function() {
+//     //call show function (basically a no vote)
+//     //emit ready for doctor voting
+//     socket.emit('requestDocNightRole');
+//
+// });
 socket.on('docVote', function() {
     //show voting for doc
     //emit ready for detective voting
-    socket.emit('requestDetNightRole');
+    beginNightForDoctor();
 
 });
-socket.on('nonDocVote', function() {
-    //call show function
-    //emit ready for detective voting
-    socket.emit('requestDetNightRole');
-});
+// socket.on('nonDocVote', function() {
+//     //call show function
+//     //emit ready for detective voting
+//     socket.emit('requestDetNightRole');
+// });
 socket.on('detVote', function() {
     //show voting for detective
     //emit ready for morning
-    socket.emit('readyForMorning');
-});
-socket.on('nonDetVote', function() {
-    //call show function
-    //emit ready for morning
-    socket.emit('readyForMorning');
-});
-socket.on('startNewDay', function() {
+    beginNightForDetective();
 
 });
-socket.on('mafiaWins', function() {
+socket.on('morning', function(target) {
+
+});
+socket.on('noNightVote', function() {
+    //show voting for detective
+    //emit ready for morning
+    beginNightForDeadAndCitzens();
+
+});
+// socket.on('nonDetVote', function() {
+//     //call show function
+//     //emit ready for morning
+//     socket.emit('readyForMorning');
+// });
+socket.on('waitNightVote', function(){
+    beginNightForDeadAndCitzens();
+    console.log("is waiting");
+});
+socket.on('startNewDay', function(name) {
+    if(name===null)console.log('mafia has tried to murder someone but the doctor saved them');
+    else console.log('mafia has murdered '+name);
+    beginDay();
+});
+socket.on('detectiveMorning', function(detectiveTarget,targetRole){
+
+    console.log('you are detective, you have found out that '+detectiveTarget+' is a '+targetRole);
+
+});
+socket.on('mafiaWins', function(mafia,target) {
     console.log('mafia wins');
+    showMafiaWon(mafia,target,'mafia');
 });
 socket.on('returnIsMafia', function(isMafia) {
 
@@ -449,7 +470,7 @@ function beginDay() {
     voteButton.text('Vote');
     disable(voteButton);
     voteButton.one('click', function() {
-        socket.emit('voteDay', roomCode, name, target);
+        socket.emit('voteDay', target);
         disable(voteButton);
         instruction.html("<p>Your vote has been submitted.  Please wait while the other players submit their votes.</p>");
     });
@@ -481,10 +502,10 @@ function showCitizensWon(teamMems,votedOut, votedRole) {
     } else {
         instruction.html("<p>Nobody was killed today, but there are no mafia left, Citizens win!");
       }
-
+      //TODO make it go to landing
     //Set button to "I'm Ready"
     voteButton.off('click');
-    voteButton.text("I'm Ready");
+    voteButton.text("Go back to landing");
     voteButton.prop('disabled', false);
     voteButton.removeClass('disabled');
     //Prevent users from voting more than once.
@@ -492,7 +513,6 @@ function showCitizensWon(teamMems,votedOut, votedRole) {
 
     voteButton.one('click', function() {
 
-        beginNight();
     });
 
     //Change phase to day
@@ -514,23 +534,22 @@ function showMafiaWon(teamMems,votedOut, votedRole) {
       }
 
     //Set button to "I'm Ready"
+    //TODO this is when someone wins, turn it into a URL click to bring htem to beginning
     voteButton.off('click');
-    voteButton.text("I'm Ready");
+    voteButton.text("Go To Landing Page");
     voteButton.prop('disabled', false);
     voteButton.removeClass('disabled');
     //Prevent users from voting more than once.
 
 
     voteButton.one('click', function() {
-
-        beginNight();
     });
 
     //Change phase to day
     //beginDay();
 }
 
-function beginEvening(votedOut, votedRole, remaining) {
+function beginEvening(votedOut, votedRole, remaining,socket) {
     //Hide player list
     gamePlayerList.addClass('hidden');
     var remaining, eliminatedRole;
@@ -552,16 +571,30 @@ function beginEvening(votedOut, votedRole, remaining) {
     //Prevent users from voting more than once.
 
 
-    voteButton.one('click', function() {
-
-        beginNight();
+    voteButton.one('click', function(socket) {
+        sendNightReq();
+        //beginNight();
     });
 
     //Change phase to day
     //beginDay();
 }
-
-function beginNight() {
+function sendWaitNightReq(){
+    socket.emit('nightVoting',null);
+}
+function sendNightReq() {
+    socket.emit('requestNightRole');
+}
+function sendDetNightReq() {
+    socket.emit('nightVoting',nightTarget);
+}
+function sendDocNightReq() {
+    socket.emit('nightVoting',nightTarget);
+}
+function sendMafiaNightReq() {
+    socket.emit('nightVoting',nightTarget);
+}
+function beginNightForMafia() {
     console.log('It is night, my dudes.  AHHHHH');
     //spencer
     //send request to night for what to do
@@ -586,25 +619,152 @@ function beginNight() {
     voteButton.prop('disabled', true);
 
     //Add the on click function for all users in the list group to select and target them
-    if(myRole === "mafia") {
+
         $('.list-group-item').click(function() {
             $('.active').removeClass('active');
             voteButton.removeClass('disabled');
 
             $(this).addClass('active');
-            target = $(this).text();
+            nightTarget = $(this).text();
             console.log('Target: ' + target);
         });
-    } else {
-        $('.list-group-item').removeClass('active').addClass('disabled').prop('disabled', true).off('click');
-    }
-
+    voteButton.one('click', function(socket) {
+        sendMafiaNightReq();
+        //beginNight();
+    });
 
     $('li:contains("' + name + '")').off('click').addClass('disabled');
     //spencer
     //send me mafia night role
 }
 
+function beginNightForDoctor() {
+    console.log('It is night, my dudes.  AHHHHH');
+    //spencer
+    //send request to night for what to do
+    //recieve what to do back
+
+    //spencer
+
+
+    target = "";
+    //Replace Phase with Day, change instruction, and change Alert Color
+    phase.text(' - Night');
+    instruction.html("<p>The night will end after everyone votes, you are a doctor, vote to save someone </>");
+    gamePlayerList.removeClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
+
+    socket.emit('getUserStatuses');
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
+    voteButton.text('Vote');
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
+
+    //Add the on click function for all users in the list group to select and target them
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            nightTarget = $(this).text();
+            console.log('Target: ' + target);
+        });
+
+        voteButton.one('click', function(socket) {
+            sendDocNightReq();
+            //beginNight();
+        });
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
+    //spencer
+    //send me mafia night role
+}
+function beginNightForDeadAndCitzens() {
+    console.log('It is night, my dudes.  AHHHHH');
+    //spencer
+    //send request to night for what to do
+    //recieve what to do back
+
+    //spencer
+
+
+    target = "";
+    //Replace Phase with Day, change instruction, and change Alert Color
+    phase.text(' - Night');
+    instruction.html("<p>The night will end after everyone who has a role votes, ready up. </>");
+    gamePlayerList.addClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
+
+    socket.emit('getUserStatuses');
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
+    voteButton.text('Ready Up');
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
+
+    //Add the on click function for all users in the list group to select and target them
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            nightTarget = $(this).text();
+            console.log('Target: ' + target);
+        });
+
+        voteButton.one('click', function(socket) {
+            sendWaitNightReq();
+            //beginNight();
+        });
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
+    //spencer
+    //send me mafia night role
+}
+
+function beginNightForDetective() {
+    console.log('It is night, my dudes.  AHHHHH');
+    //spencer
+    //send request to night for what to do
+    //recieve what to do back
+
+    //spencer
+
+
+    target = "";
+    //Replace Phase with Day, change instruction, and change Alert Color
+    phase.text(' - Night');
+    instruction.html("<p>The night will end after everyone votes, you are a detective, vote to find someone's role </>");
+    gamePlayerList.removeClass('hidden');
+    roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
+
+    socket.emit('getUserStatuses');
+
+    //Remove eventListeners and disabled status on button for everyone except the dead
+    voteButton.off('click');
+    voteButton.text('Vote');
+    voteButton.addClass('disabled');
+    voteButton.prop('disabled', true);
+
+    //Add the on click function for all users in the list group to select and target them
+        $('.list-group-item').click(function() {
+            $('.active').removeClass('active');
+            voteButton.removeClass('disabled');
+
+            $(this).addClass('active');
+            nightTarget = $(this).text();
+            console.log('Target: ' + target);
+        });
+        voteButton.one('click', function(socket) {
+            sendDetNightReq();
+            //beginNight();
+        });
+
+    $('li:contains("' + name + '")').off('click').addClass('disabled');
+    //spencer
+    //send me mafia night role
+}
 
 function revoteDay() {
     socket.emit('serverRevoting');

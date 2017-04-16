@@ -20,10 +20,6 @@ var hashstuff = [];//name room id
 var disconnect = [];// {roomID, [name]}
 var hostID = 0;
 var votingTime = 1;
-var readyMorningCount=0;
-var readyMafiaCount = 0;
-var readyDocCount = 0;
-var readyDetCount = 0;
 // Helper functions
 var discArray = [];
 //----------------------------------------------------
@@ -124,8 +120,7 @@ io.on('connection', function(socket) {
 				socketRoom = findRoom(roomCode);
 				addUserToRoom(socketRoom,socketUserName,socket);//calls function that adds to room
 
-				console.log("the size of room is "+socketRoom.users.length);
-				//Let other users know that I joined
+			//Let other users know that I joined
 				socket.broadcast.to(roomCode).emit('newUser', username);
 				//Let this user know they successfully joined
 				socket.emit('successJoin');
@@ -146,10 +141,7 @@ io.on('connection', function(socket) {
 		var names = [];
 
 		//console.log(room);
-		console.log("in GetUsers, array of users list is "+room.users);
-		console.log("in GetUsers, length of users list is "+room.users.length);
 		for(var u = 0; u < room.users.length; u++) {
-			console.log("in iteration "+u+", tryign to find name of "+room.users[u].name);
 			var thisName = room.users[u].name;
 			names.push(thisName);
 		}
@@ -173,15 +165,18 @@ io.on('connection', function(socket) {
 			roomCode: roomCode,
 			users: users,
 			started: false,
-			votes: []
+			votes: [],
+			nightVoting: 0,
+			mafiaVoted: [],
+			detVoted: '',
+			docVoted: '',
+			detective: '',
+			doctor: ''
 		};
-		console.log("before setting Socket Room equal to room, it looks like :"+ room.roomCode);
 
 		socketRoom = room;
 		activeRooms.push(room);
-		console.log("before pushing room to Add function, it looks like :"+ socketRoom.roomCode);
 		var users = addUserToRoom(room,socketUserName,socket);
-		console.log("the size of room is "+socketRoom.users.length);
 		//Send the newUser message to clients that are listening on roomCode
 		socket.emit('newUser', username);
 
@@ -326,6 +321,114 @@ io.on('connection', function(socket) {
 
 	});
 
+	socket.on('requestNightRole', function(){
+		var role = getRole(socketRoomCode,socket);
+		var status = getStatus(socketRoom, socket);
+		if(status!==true){
+			console.log(socketUserName+" is dead and client is being told");
+			socket.emit('waitNightVote');
+		}
+		else if(role === 'citizen'){
+			console.log(socketUserName+" is citizen and client is being told");
+			socket.emit('waitNightVote');
+
+		}
+		else if(role === 'mafia'){
+			console.log(socketUserName+" is mafia and client is being told");
+			socket.emit('mafiaVote', getOtherMafia(socketRoom,socketUserName));
+		}
+		else if(role === 'doctor'){
+			console.log(socketUserName+" is doctor and client is being told");
+			socket.emit('docVote');
+
+		}
+		else if(role === 'detective'){
+			console.log(socketUserName+" is detective and client is being told");
+			socket.emit('detVote');
+
+		}
+		else {
+			console.log("didnt do anything");
+		}
+
+
+	});
+	socket.on('nightVoting', function(target){
+		var room = socketRoom;
+		room.nightVoting++;
+		console.log("voting "+room.nightVoting+" out of "+room.totalRemaining);
+		//put vote places
+		if(target===null){
+			console.log(socketUserName+" readied up");
+		}
+		else if(findUserBySocket(socketRoom,socket).role==='mafia'){
+			console.log(socketUserName+" voted for "+target+" and is a mafia");
+			room.mafiaVoted.push(target);
+		}
+		else if(findUserBySocket(socketRoom,socket).role==='doctor'){
+			room.doctor=socketUserName;
+			console.log(socketUserName+" voted for "+target+" and is a doctor");
+			room.docVoted=target;
+		}
+		else if(findUserBySocket(socketRoom,socket).role==='detective'){
+			room.detective=socketUserName;
+			console.log(socketUserName+" voted for "+target+" and is a mafia");
+			room.detVoted=target;
+		}
+		if(room.nightVoting>=room.totalRemaining){
+			console.log("all night voted, time to move on");
+			room.votes = [];
+			var detectiveTarget = '';
+			var mafiaTarget = '';
+			var doctorTarget = '';
+			if(room.docVoted!==''){
+				doctorTarget=room.docVoted;
+			}
+			if(room.mafiaVoted.length>0){
+				mafiaTarget = mafiaVoted(room.mafiaVoted);
+			}
+			if(room.detVoted===''){
+				detectiveTarget = room.detVoted;
+			}
+			if(doctorTarget!==mafiaTarget){
+				room.citizensRemaining--;
+				console.log("remaining cits are "+room.citizensRemaining);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+			}
+			if(doctorTarget===mafiaTarget){
+				//died but saved
+				console.log('doc saved someone');
+				io.to(socketRoomCode).emit('startNewDay',null);
+
+			}
+			else if(room.citizensRemaining===0){
+				console.log('mafia won');
+				io.to(socketRoomCode).emit('mafiaWon',getMafia(socketRoom),mafiaTarget);
+			}
+			else if(mafiaTarget!=='' && mafiaTarget!==room.detective){
+				//mafia killed detective
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+				if(room.detective!==''){
+					var targetRole = getRole(room.roomCode,findUser(room,room.detVoted).socket);
+					console.log("detective found someone");
+					findUser(room,room.detective).socket.to(socketRoomCode).emit('detectiveMorning',detectiveTarget,targetRole);
+				}
+			}
+			else if(mafiaTarget!==''){
+				console.log('no idea');
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+			}
+			else {
+				console.log('made it throught all cases in night voting, got to edge case that we did not account for');
+			}
+
+
+			room.nightVoting=0;
+			room.mafiaVoted=[];
+			room.detVoted = '';
+			room.docVoted = '';
+		}
+	});
 	socket.on('requestDocNightRole', function(){
 		//check if doc exists
 
@@ -334,7 +437,7 @@ io.on('connection', function(socket) {
 		//TODO wait for everyone
 		var room = socketRoom;
 		readyDocCount++;
-		if(readyDocCount===(room.remainingMafia+room.remainingCitizens)){
+		if(readyDocCount===(room.remainingMafia+room.citizensRemaining)){
 			readyDocCount=0;
 			for(var k = 0; k < room.users.length; ++k){
 				var tempSock=room.users[k].socket;
@@ -357,7 +460,7 @@ io.on('connection', function(socket) {
 					}
 				}
 				else if(false){//TODO check tally and see if win
-					tempSock.emit('mafiaWins');
+					tempSock.emit('mafiaWins',getMafia(socketRoom),mafiaTarget);
 				}
 				else{
 					tempSock.emit('startNewDay');
@@ -378,7 +481,7 @@ io.on('connection', function(socket) {
 		//TODO wait for everyone
 		var room = socketRoom;
 		readyDetCount++;
-		if(readyDetCount===(room.remainingMafia+room.remainingCitizens)){
+		if(readyDetCount===(room.remainingMafia+room.citizensRemaining)){
 			readyDetCount=0;
 			for(var k = 0; k < room.users.length; ++k){
 				var tempSock=room.users[k].socket;
@@ -411,7 +514,7 @@ io.on('connection', function(socket) {
 		//TODO wait for everyone
 		var room = socketRoom;
 		readyMorningCount++;
-		if(readyMorningCount===(room.remainingMafia+room.remainingCitizens)){
+		if(readyMorningCount===(room.remainingMafia+room.citizensRemaining)){
 			readyMorningCount=0;
 			for(var k = 0; k < room.users.length; ++k){
 				var tempSock=room.users[k].socket;
@@ -515,6 +618,27 @@ function ifDoctor(code,socket){
 		}
 	}
 
+}
+function mafiaVoted(array)
+{
+    if(array.length == 0)
+        return null;
+    var modeMap = {};
+    var maxEl = array[0], maxCount = 1;
+    for(var i = 0; i < array.length; i++)
+    {
+        var el = array[i];
+        if(modeMap[el] == null)
+            modeMap[el] = 1;
+        else
+            modeMap[el]++;
+        if(modeMap[el] > maxCount)
+        {
+            maxEl = el;
+            maxCount = modeMap[el];
+        }
+    }
+    return maxEl;
 }
 function ifDetective(code,socket){
 	var room = findRoom(code);
@@ -723,6 +847,21 @@ function getName(roomCode, socket){
 	for(var i = 0; i<room.users.length;++i){
 		if(room.users[i].socketID===socket.id){
 			return room.users[i].name;
+		}
+	}
+}
+function getRole(roomCode, socket){
+	var room = findRoom(roomCode);
+	for(var i = 0; i<room.users.length;++i){
+		if(room.users[i].socketID===socket.id){
+			return room.users[i].role;
+		}
+	}
+}
+function getStatus(room, socket){
+	for(var i = 0; i<room.users.length;++i){
+		if(room.users[i].socketID===socket.id){
+			return room.users[i].alive;
 		}
 	}
 }
