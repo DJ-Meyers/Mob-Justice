@@ -980,7 +980,7 @@ function tallyVotes(room) {
 function getMajority(usersVotedFor, totalVotes) {
 	var maxVotes = 0, maxTarget = "";
 	for(var i = 0; i < usersVotedFor.length; i++) {
-		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role === 'mafia'){
+		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role !== 'mafia'){
 			//TODO figure out why this is doing the opposite of what it's supposed to.
 			console.log("edge case where even and now mafia: "+usersVotedFor[i].name+" is going to be hung");
 			maxVotes = usersVotedFor[i].num;
