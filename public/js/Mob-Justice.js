@@ -381,7 +381,7 @@ function disableMe() {
     disable(findNameInJQueryList(name));
 }
 function disableGroup(group){
-    for(int i = 0;i<group.length;++i){
+    for(var i = 0;i<group.length;++i){
         disable(findNameInJQueryList(group[i]));
     }
 }
@@ -664,7 +664,14 @@ function beginNightForMafia(listOfMafia) {
     voteButton.addClass('disabled');
     voteButton.prop('disabled', true);
 
+    $('.list-group-item').click(function() {
+        $('.active').removeClass('active');
+        voteButton.removeClass('disabled');
 
+        $(this).addClass('active');
+        nightTarget = $(this).text();
+        console.log('Target: ' + target);
+    });
 
     //Add the on click function for all users in the list group to select and target them
     // $('.list-group-item').click(function() {
@@ -680,7 +687,7 @@ function beginNightForMafia(listOfMafia) {
         //beginNight();
         disable($(this));
     });
-    disableList(listOfMafia);
+    //disableList(listOfMafia);
 
     //spencer
     //send me mafia night role
