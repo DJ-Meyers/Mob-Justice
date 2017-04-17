@@ -214,7 +214,14 @@ io.on('connection', function(socket) {
 
 		socket.emit('userStatuses', userStatuses);
 	});
+	socket.on('getUserStatusesForMafia', function() {
+		if(findUserBySocket(socket.room, socket).role==='mafia'){
+			var userStatuses = getUserStatuses(socketRoom);
+			var mafiaGroup = getMafia(socket,'');
 
+			socket.emit('setUpMafiaNightVoting', userStatuses,mafiaGroup);
+		}
+	});
 	//Handle Voting logic for the day
 	socket.on('voteDay', function(target) {
 		var room = socketRoom;

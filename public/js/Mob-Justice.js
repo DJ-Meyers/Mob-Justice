@@ -199,6 +199,14 @@ socket.on('userStatuses', function(userStatuses) {
     console.log(userStatuses);
     resetVoting(userStatuses);
 });
+socket.on('setUpMafiaNightVoting', function(userStatuses,mafia) {
+    console.log(userStatuses);
+    //TODO DJ, check for role stuff here, this is where you would disable if mafia
+
+    disableDead(userStatuses);
+    disableMe();
+    disableGroup(mafia);
+});
 socket.on('movingOnToEndDay', function(votedOut, votedRole, remaining) {
     console.log(votedOut + " has been voted out.");
     console.log(remaining);
@@ -371,6 +379,11 @@ function disableDead(userStatuses) {
 
 function disableMe() {
     disable(findNameInJQueryList(name));
+}
+function disableGroup(group){
+    for(var i = 0;i<group.length;++i){
+        disable(findNameInJQueryList(group[i]));
+    }
 }
 
 function disableAll() {
@@ -643,7 +656,7 @@ function beginNightForMafia(listOfMafia) {
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
-    socket.emit('getUserStatuses');
+    socket.emit('getUserStatusesForMafia');
 
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.off('click');
