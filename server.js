@@ -215,7 +215,7 @@ io.on('connection', function(socket) {
 		socket.emit('userStatuses', userStatuses);
 	});
 	socket.on('getUserStatusesForMafia', function() {
-		if(findUserBySocket(socket).role==='mafia'){}
+		if(findUserBySocket(socketRoom,socket).role==='mafia'){
 		var userStatuses = getUserStatuses(socketRoom);
 		var mafiaGroup = getMafia(socket,'');
 
