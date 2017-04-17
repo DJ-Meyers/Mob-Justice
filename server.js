@@ -22,6 +22,7 @@ var hostID = 0;
 var votingTime = 1;
 // Helper functions
 var discArray = [];
+var readiedUpVotes = 0;
 //----------------------------------------------------
 // Initialize App
 //----------------------------------------------------
@@ -225,9 +226,10 @@ io.on('connection', function(socket) {
 	socket.on('voteDay', function(target) {
 		var room = socketRoom;
 		console.log("\n" + socketRoomCode + ": " + socketUserName + " voted for " + target);
-		room.votes.push(target);
-
-		if(room.votes.length === room.totalRemaining) {
+		if(target!=='')room.votes.push(target);
+		else readiedUpVotes++;
+		if((room.votes.length+readiedUpVotes) === room.totalRemaining) {
+			readiedUpVotes=0;
 			console.log("      All votes submitted");
 
 			var votedOut = tallyVotes(room);
@@ -964,7 +966,7 @@ function tallyVotes(room) {
 function getMajority(usersVotedFor, totalVotes) {
 	var maxVotes = 0, maxTarget = "";
 	for(var i = 0; i < usersVotedFor.length; i++) {
-		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role !== 'mafia'){
+		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role === 'mafia'){
 			//TODO figure out why this is doing the opposite of what it's supposed to.
 			console.log("edge case where even and now mafia: "+usersVotedFor[i].name+" is going to be hung");
 			maxVotes = usersVotedFor[i].num;

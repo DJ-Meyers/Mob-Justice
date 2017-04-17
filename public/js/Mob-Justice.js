@@ -197,7 +197,15 @@ socket.on('settingUpRevoting', function(userStatuses){
 });
 socket.on('userStatuses', function(userStatuses) {
     console.log(userStatuses);
-    resetVoting(userStatuses);
+    var userAlive = true;
+    for(var i = 0; i<userStatuses.length;++i){
+
+        if(userStatuses[i].name === name){userAlive=userStatuses[i].alive;
+            console.log(name + " is currently : "+ userStatuses[i].alive);
+        }
+    }
+    if(userAlive===false)gamePlayerList.addClass('hidden');
+    else resetVoting(userStatuses);
 });
 socket.on('setUpMafiaNightVoting', function(userStatuses,mafia) {
     console.log(userStatuses);
@@ -364,17 +372,18 @@ function resetVoting(userStatuses) {
 
 function disableDead(userStatuses) {
     //console.log($('.list-group-item'));
-    $('.list-group-item').each(function() {
-        $(this).removeClass('active');
-        if(isAlive($(this).text(), userStatuses)) {
-            //console.log('enabling: ' + $(this));
-            enable($(this));
-        } else {
-            //console.log('disabling: ' + $(this));
-            disable($(this));
-            $(this).addClass('list-group-item-danger');
-        }
-    });
+        $('.list-group-item').each(function() {
+            $(this).removeClass('active');
+            if(isAlive($(this).text(), userStatuses)) {
+                //console.log('enabling: ' + $(this));
+                enable($(this));
+            } else {
+                //console.log('disabling: ' + $(this));
+                disable($(this));
+                $(this).addClass('list-group-item-danger');
+            }
+        });
+
 }
 
 function disableMe() {
@@ -500,8 +509,9 @@ function beginInstructions() {
 
 //Begin Day phase of game
 function beginDay() {
+    target='';
     votingTime = 1;
-    target = "";
+    //target = "";
     //Replace Phase with Day, change instruction, and change Alert Color
     phase.text('Day');
     instruction.html("<p>The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.</p>");
