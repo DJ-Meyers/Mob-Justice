@@ -436,6 +436,7 @@ io.on('connection', function(socket) {
 
 
 			room.nightVoting=0;
+			room.mafiaSuggested=[];
 			room.mafiaVoted=[];
 			room.detVoted = '';
 			room.docVoted = '';
@@ -554,6 +555,7 @@ io.on('connection', function(socket) {
 	socket.on('updateOtherMafia', function( target) {
 		// console.log('updating mafia in',roomCode,'that',target,'was targeted');
 		// room.voted.
+		console.log(socket);
 		var room = socketRoom;
 		for(var i = 0; i < room.users.length; i++) {
 			// console.log(room.users[i].socketID);
