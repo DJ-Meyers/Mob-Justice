@@ -26,6 +26,7 @@ var gameRoom			=	$('#gameRoom');
     var roomCodeSpan	=	$('#roomCodeSpan');
     var phase           =   $('#phase');
     var instruction     =   $('#instruction');
+    var roleP           =   $('#role');
     var gamePlayerList	=	$('#gamePlayerList');
     var voteButton      =   $('#voteButton');
 
@@ -163,7 +164,7 @@ socket.on('myRole', function(role, others) {
     console.log('myRole: ' + role + ", others: " + others);
     myRole = role;
     //Set instruction based on my role.
-        instruction.append("<p><strong>Your Role: </strong>" + role + "</p>");
+        roleP.append("<p><strong>Your Role: </strong>" + role + "</p>");
     if(role === "mafia") {
 
         var othersString = "";
@@ -180,7 +181,7 @@ socket.on('myRole', function(role, others) {
 // now
 socket.on('settingUpRevoting', function(userStatuses){
     console.log('trying to revote');
-    phase.text(' - Day: Revote');
+    phase.text('Day: Revote');
     instruction.text("The day will end when a majority votes to kill a member of the the town.  Click on a player's name then press the submit button to vote for that person.  The citizens win if all mafia members have been killed.");
 
     resetVoting(userStatuses);
@@ -232,7 +233,8 @@ socket.on('eliminatedRole', function(role) {
 socket.on('mafiaVote', function(listOfMafia) {
     //show voting for mafia
     //emit ready for doctor
-    beginNightForMafia();
+    // console.log(listOfMafia);
+    beginNightForMafia(listOfMafia);
 });
 // socket.on('nonMafiaVote', function() {
 //     //call show function (basically a no vote)
@@ -353,15 +355,16 @@ function resetVoting(userStatuses) {
 }
 
 function disableDead(userStatuses) {
-    console.log($('.list-group-item'));
+    //console.log($('.list-group-item'));
     $('.list-group-item').each(function() {
         $(this).removeClass('active');
         if(isAlive($(this).text(), userStatuses)) {
-            console.log('enabling: ' + $(this));
+            //console.log('enabling: ' + $(this));
             enable($(this));
         } else {
-            console.log('disabling: ' + $(this));
+            //console.log('disabling: ' + $(this));
             disable($(this));
+            $(this).addClass('list-group-item-danger');
         }
     });
 }
@@ -385,20 +388,34 @@ function isAlive(name, userStatuses) {
     // console.log('isAlive: ' + userStatuses);
     for(var i = 0; i < userStatuses.length; i++) {
         if(userStatuses[i].name === name) {
-            console.log(userStatuses[i].name + ": " + userStatuses[i].alive);
+            //console.log(userStatuses[i].name + ": " + userStatuses[i].alive);
             return (userStatuses[i].alive);
         }
     }
     return false;
 }
 
+function disableList(listOfNames) {
+    var thisPerson;
+    var d = new Date();
+    for(var i = 0; i < listOfNames.length; i++) {
+        thisPerson = findNameInJQueryList(listOfNames[i]);
+        console.log(d,'Disabling',listOfNames[i]);
+        disable(thisPerson);
+    }
+}
+
 function disable(jQueryItem) {
+    var d = new Date();
+    console.log(d,'Disabling:',jQueryItem.text());
     jQueryItem.addClass('disabled');
     jQueryItem.prop('disabled', true);
     jQueryItem.off('click');
 }
 
 function enable(jQueryItem) {
+    var d = new Date();
+    console.log(d,'Enabling:',jQueryItem.text());
     jQueryItem.removeClass('disabled');
     jQueryItem.prop('disabled', false);
     jQueryItem.click(function() {
@@ -610,7 +627,7 @@ function sendDocNightReq() {
 function sendMafiaNightReq() {
     socket.emit('nightVoting',nightTarget);
 }
-function beginNightForMafia() {
+function beginNightForMafia(listOfMafia) {
     console.log('It is night, my dudes.  AHHHHH');
     //spencer
     //send request to night for what to do
@@ -634,23 +651,24 @@ function beginNightForMafia() {
     voteButton.addClass('disabled');
     voteButton.prop('disabled', true);
 
+
+
     //Add the on click function for all users in the list group to select and target them
-
-        $('.list-group-item').click(function() {
-            $('.active').removeClass('active');
-            voteButton.removeClass('disabled');
-
-            $(this).addClass('active');
-            nightTarget = $(this).text();
-            console.log('Target: ' + target);
-        });
+    // $('.list-group-item').click(function() {
+    //     $('.active').removeClass('active');
+    //     voteButton.removeClass('disabled');
+    //
+    //     $(this).addClass('active');
+    //     nightTarget = $(this).text();
+    //     console.log('Target: ' + target);
+    // });
     voteButton.one('click', function(socket) {
         sendMafiaNightReq();
         //beginNight();
         disable($(this));
     });
+    disableList(listOfMafia);
 
-    $('li:contains("' + name + '")').off('click').addClass('disabled');
     //spencer
     //send me mafia night role
 }
@@ -673,6 +691,8 @@ function beginNightForDoctor() {
 
     socket.emit('getUserStatuses');
 
+
+
     //Remove eventListeners and disabled status on button for everyone except the dead
     voteButton.off('click');
     voteButton.text('Vote');
@@ -694,7 +714,7 @@ function beginNightForDoctor() {
             //beginNight();
             disable($(this));
         });
-    $('li:contains("' + name + '")').off('click').addClass('disabled');
+    enable($('li:contains("' + name + '")'));
     //spencer
     //send me mafia night role
 }
