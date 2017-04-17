@@ -302,7 +302,7 @@ socket.on('startNewDay', function(name,role,remaining) {
 socket.on('detectiveMorning', function(detectiveTarget,targetRole){
 
     console.log('you are detective, you have found out that '+detectiveTarget+' is a '+targetRole);
-    instruction.html(instruction.html() + "<p>You discovered that " + detectiveTarget + " is a " + targetRole + "</p>");
+    instruction.html(instruction.html() + "<p>The person you investigated is a " + targetRole + "</p>");
 
 });
 
@@ -719,7 +719,7 @@ function beginNightForDoctor() {
     gamePlayerList.removeClass('hidden');
     roomCodeTitle.removeClass('alert-warning').addClass('alert-danger');
 
-    socket.emit('getUserStatuses');
+    socket.emit('getUserStatusesForDoctor');
 
 
 
