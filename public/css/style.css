@@ -64,6 +64,9 @@ p > p {
     z-index: 1;
 }
 
+#gamePlayerList {
+    margin-bottom: 60px;
+}
 
 .navbar-brand {
     display: flex;

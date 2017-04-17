@@ -411,7 +411,9 @@ io.on('connection', function(socket) {
 				if(room.detective!==''){
 					var targetRole = getRole(room.roomCode,findUser(room,room.detVoted).socket);
 					console.log("detective found someone");
+					//TODO emits to everyone.  Fix that ish
 					findUser(room,room.detective).socket.to(socketRoomCode).emit('detectiveMorning',detectiveTarget,targetRole);
+
 				}
 			}
 			else if(mafiaTarget!==''){
@@ -942,16 +944,17 @@ function tallyVotes(room) {
 function getMajority(usersVotedFor, totalVotes) {
 	var maxVotes = 0, maxTarget = "";
 	for(var i = 0; i < usersVotedFor.length; i++) {
-		if(usersVotedFor[i].num > maxVotes) {
-			maxVotes = usersVotedFor[i].num;
-			maxTarget = usersVotedFor[i].name;
-		}
-		else if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role==='mafia'){
+		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role !== 'mafia'){
 			//TODO figure out why this is doing the opposite of what it's supposed to.
 			console.log("edge case where even and now mafia: "+usersVotedFor[i].name+" is going to be hung");
 			maxVotes = usersVotedFor[i].num;
 			maxTarget = usersVotedFor[i].name;
+		} else if(usersVotedFor[i].num > maxVotes) {
+			maxVotes = usersVotedFor[i].num;
+			maxTarget = usersVotedFor[i].name;
 		}
+
+
 	}
 	// console.log(maxTarget + ": " + maxVotes);
 	if(maxVotes >= totalVotes / 2) {
