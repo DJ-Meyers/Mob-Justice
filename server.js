@@ -393,27 +393,30 @@ io.on('connection', function(socket) {
 				detectiveTarget = room.detVoted;
 			}
 			if(doctorTarget!==mafiaTarget){
-				if(mafiaTargetRole==='doctor')room.doctorRemaining--;
-				else if (mafiaTargetRole==='detective')room.detectiveRemaining--;
-				else if (mafiaTargetRole==='citizen')room.citizensRemaining--;
+				// if(mafiaTargetRole==='doctor')room.doctorRemaining--;
+				// else if (mafiaTargetRole==='detective')room.detectiveRemaining--;
+				// else if (mafiaTargetRole==='citizen')room.citizensRemaining--;
+				voteOut(socketRoom,mafiaTarget);
 				if(room.citizensRemaining===0){
 					console.log('mafia won');
-					io.to(socketRoomCode).emit('mafiaWon',getMafia(socketRoom),mafiaTarget);
+					io.to(socketRoomCode).emit('mafiaWon',getMafia(socketRoom),mafiaTarget,getRemainingRoles(socketRoom));
 				}
 				else{
+
 				console.log("remaining cits are "+room.citizensRemaining);
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole,getRemainingRoles(socketRoom));
 				}
 			}
 			if(doctorTarget===mafiaTarget){
 				//died but saved
 				console.log('doc saved someone');
-				io.to(socketRoomCode).emit('startNewDay',null,null);
+				io.to(socketRoomCode).emit('startNewDay',null,null,getRemainingRoles(socketRoom));
 
 			}
 			else if(mafiaTarget!=='' && mafiaTarget!==room.detective){
 				//mafia killed detective
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget, mafiaTargetRole);
+				voteOut(socketRoom,mafiaTarget);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget, mafiaTargetRole,getRemainingRoles(socketRoom));
 				if(room.detective!==''){
 					var targetRole = getRole(room.roomCode,findUser(room,room.detVoted).socket);
 					console.log("detective found someone");
@@ -424,7 +427,8 @@ io.on('connection', function(socket) {
 			}
 			else if(mafiaTarget!==''){
 				console.log('no idea');
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole);
+				voteOut(socketRoom,mafiaTarget);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole,getRemainingRoles(socketRoom));
 			}
 			else {
 				console.log('made it throught all cases in night voting, got to edge case that we did not account for');
@@ -969,7 +973,16 @@ function getMajority(usersVotedFor, totalVotes) {
 		return null;
 	}
 }
-
+function getRemainingRoles(room){
+	var remaining = {
+		total: room.totalRemaining,
+		citizens: room.citizensRemaining,
+		mafia: room.mafiaRemaining,
+		doctor: room.doctorRemaining,
+		detective: room.detectiveRemaining
+	};
+	return remaining;
+}
 //Vote out a user by setting alive to false and adjusting the remaining counts
 function voteOut(room, votedOut) {
 	for (var i = 0; i < room.users.length; i++) {
