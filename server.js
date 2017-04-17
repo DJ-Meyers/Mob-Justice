@@ -221,6 +221,13 @@ io.on('connection', function(socket) {
 			socket.emit('setUpMafiaNightVoting', userStatuses,mafiaGroup);
 		}
 	});
+	socket.on('getUserStatusesForDoctor', function() {
+		if(findUserBySocket(socketRoom,socket).role==='doctor'){
+			var userStatuses = getUserStatuses(socketRoom);
+
+			socket.emit('setUpDoctorNightVoting', userStatuses);
+		}
+	});
 	//Handle Voting logic for the day
 	socket.on('voteDay', function(target) {
 		var room = socketRoom;
@@ -362,7 +369,7 @@ io.on('connection', function(socket) {
 	socket.on('nightVoting', function(target){
 		var room = socketRoom;
 		room.nightVoting++;
-		console.log("voting "+room.nightVoting+" out of "+room.totalRemaining);
+		console.log("voting "+room.nightVoting+" out of "+room.users.length);
 		//put vote places
 		if(target===null){
 			console.log(socketUserName+" readied up");
@@ -378,7 +385,7 @@ io.on('connection', function(socket) {
 		}
 		else if(findUserBySocket(socketRoom,socket).role==='detective'){
 			room.detective=socketUserName;
-			console.log(socketUserName+" voted for "+target+" and is a mafia");
+			console.log(socketUserName+" voted for "+target+" and is a detective");
 			room.detVoted=target;
 		}
 		if(room.nightVoting>=room.users.length){
@@ -420,6 +427,13 @@ io.on('connection', function(socket) {
 				console.log('doc saved someone');
 				io.to(socketRoomCode).emit('startNewDay',null,null,getRemainingRoles(socketRoom));
 
+				if(room.detective!==''){
+					var targetRole = getRole(room,findUser(room,room.detVoted).socket);
+					console.log("detective found someone");
+					//TODO emits to everyone.  Fix that ish
+					findUser(room,room.detective).socket.emit(socketRoomCode).emit('detectiveMorning',detectiveTarget,targetRole);
+
+				}
 			}
 			else if(mafiaTarget!=='' && mafiaTarget!==room.detective){
 				//mafia killed detective
