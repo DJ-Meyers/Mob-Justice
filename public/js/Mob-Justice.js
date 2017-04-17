@@ -275,10 +275,10 @@ socket.on('waitNightVote', function(){
     beginNightForDeadAndCitzens();
     console.log("is waiting");
 });
-socket.on('startNewDay', function(name) {
+socket.on('startNewDay', function(name,role,remaining) {
     if(name===null)console.log('mafia has tried to murder someone but the doctor saved them');
     else console.log('mafia has murdered '+name);
-    beginMorning();
+    beginMorning(name,role,remaining);
 });
 
 socket.on('detectiveMorning', function(detectiveTarget,targetRole){
@@ -775,7 +775,7 @@ function beginNightForDetective() {
     //send me mafia night role
 }
 
-function beginMorning() {
+function beginMorning(votedOut,votedRole,remaining) {
     gamePlayerList.addClass('hidden');
     var remaining, eliminatedRole;
     //Set phase to Instructions, change alert color
@@ -785,7 +785,7 @@ function beginMorning() {
     if(votedOut) {
         instruction.html("<p>The mafia killed <strong>" + votedOut + "</strong> who was a " + votedRole + ".  There are currently " + remaining.total + " total remaining townspeople, including " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     } else {
-        instruction.html("<p>Nobody was killed today.  There are currently " + remaining.total + " total remaining townspeople, including " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
+        instruction.html("<p>Nobody was killed today, as the doctor saved the inteded victim.  There are currently " + remaining.total + " total remaining townspeople, including " + remaining.citizens + " citizens, " + remaining.mafia + " mafia, " + remaining.doctor + " doctor, and " + remaining.detective + " detective.</p>");
     }
 
     //Set button to "I'm Ready"
@@ -797,7 +797,7 @@ function beginMorning() {
 
 
     voteButton.one('click', function(socket) {
-        sendNightReq();
+        beginDay();
         //beginNight();
     });
 }

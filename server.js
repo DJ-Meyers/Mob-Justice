@@ -375,50 +375,56 @@ io.on('connection', function(socket) {
 			console.log(socketUserName+" voted for "+target+" and is a mafia");
 			room.detVoted=target;
 		}
-		if(room.nightVoting>=room.totalRemaining){
+		if(room.nightVoting>=room.users.length){
 			console.log("all night voted, time to move on");
 			room.votes = [];
 			var detectiveTarget = '';
 			var mafiaTarget = '';
 			var doctorTarget = '';
+			var mafiaTargetRole = '';
 			if(room.docVoted!==''){
 				doctorTarget=room.docVoted;
 			}
 			if(room.mafiaVoted.length>0){
 				mafiaTarget = mafiaVoted(room.mafiaVoted);
+				mafiaTargetRole = findUser(socketRoom,mafiaTarget).role;
 			}
 			if(room.detVoted===''){
 				detectiveTarget = room.detVoted;
 			}
 			if(doctorTarget!==mafiaTarget){
-				room.citizensRemaining--;
+				if(mafiaTargetRole==='doctor')room.doctorRemaining--;
+				else if (mafiaTargetRole==='detective')room.detectiveRemaining--;
+				else if (mafiaTargetRole==='citizen')room.citizensRemaining--;
+				if(room.citizensRemaining===0){
+					console.log('mafia won');
+					io.to(socketRoomCode).emit('mafiaWon',getMafia(socketRoom),mafiaTarget);
+				}
+				else{
 				console.log("remaining cits are "+room.citizensRemaining);
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole);
+				}
 			}
 			if(doctorTarget===mafiaTarget){
 				//died but saved
 				console.log('doc saved someone');
-				io.to(socketRoomCode).emit('startNewDay',null);
+				io.to(socketRoomCode).emit('startNewDay',null,null);
 
-			}
-			else if(room.citizensRemaining===0){
-				console.log('mafia won');
-				io.to(socketRoomCode).emit('mafiaWon',getMafia(socketRoom),mafiaTarget);
 			}
 			else if(mafiaTarget!=='' && mafiaTarget!==room.detective){
 				//mafia killed detective
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget, mafiaTargetRole);
 				if(room.detective!==''){
 					var targetRole = getRole(room.roomCode,findUser(room,room.detVoted).socket);
 					console.log("detective found someone");
 					//TODO emits to everyone.  Fix that ish
-					findUser(room,room.detective).socket.to(socketRoomCode).emit('detectiveMorning',detectiveTarget,targetRole);
+					findUser(room,room.detective).socket.emit(socketRoomCode).emit('detectiveMorning',detectiveTarget,targetRole);
 
 				}
 			}
 			else if(mafiaTarget!==''){
 				console.log('no idea');
-				io.to(socketRoomCode).emit('startNewDay',mafiaTarget);
+				io.to(socketRoomCode).emit('startNewDay',mafiaTarget,mafiaTargetRole);
 			}
 			else {
 				console.log('made it throught all cases in night voting, got to edge case that we did not account for');
