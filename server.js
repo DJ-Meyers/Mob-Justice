@@ -973,15 +973,16 @@ function tallyVotes(room) {
 		console.log("      " + usersVotedFor[i].num + " votes for " + usersVotedFor[i].name);
 	}
 
-	return getMajority(usersVotedFor, room.votes.length);
+	return getMajority(usersVotedFor, room.votes.length,room);
 }
 
 //Determine if there is a majority in the voting
-function getMajority(usersVotedFor, totalVotes) {
+function getMajority(usersVotedFor, totalVotes, room) {
 	var maxVotes = 0, maxTarget = "";
 	for(var i = 0; i < usersVotedFor.length; i++) {
-		if(usersVotedFor[i].num === maxVotes && usersVotedFor[i].role !== 'mafia'){
-			//TODO figure out why this is doing the opposite of what it's supposed to.
+		console.log("user is : " +usersVotedFor[i].name+" and votes are : "+usersVotedFor[i].num);
+		if(usersVotedFor[i].num === maxVotes && findUser(room,usersVotedFor[i].name).role === 'mafia'){
+			//TODO figure out why this is doing the oppositfe of what it's supposed to.
 			console.log("edge case where even and now mafia: "+usersVotedFor[i].name+" is going to be hung");
 			maxVotes = usersVotedFor[i].num;
 			maxTarget = usersVotedFor[i].name;

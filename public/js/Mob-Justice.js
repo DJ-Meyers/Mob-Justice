@@ -553,7 +553,7 @@ function showCitizensWon(teamMems,votedOut, votedRole) {
     roomCodeTitle.removeClass('alert-success').addClass('alert-warning');
     // socket.emit('getRemainingRoles', roomCode);
     if(votedOut) {
-        instruction.html("<p>The town voted to kill <strong>" + votedOut + "</strong> who was a " + votedRole + ". There are no more mafia left, and the Citizens have won. Congratulations to the Citizens team!");
+        instruction.html("<p>The town voted to kill the last mafia. The Mafia were <strong>" + votedOut + "</strong>. There are no more mafia left, and the Citizens have won. Congratulations to the Citizens team!");
     } else {
         instruction.html("<p>Nobody was killed today, but there are no mafia left, Citizens win!");
       }
